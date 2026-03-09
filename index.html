@@ -10,12 +10,12 @@
         
         /* 搜尋與統計區域 */
         #searchPanel { background-color: #e3f2fd; padding: 15px; border-bottom: 2px solid #0d47a1; }
-        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+        .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; align-items: center; }
         #statsSummary { font-weight: bold; color: #0d47a1; padding: 5px 0; border-top: 1px solid #bbdefb; }
         
         #calendarHeader { background-color: #0d47a1; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { background-color: #e3f2fd; color: #1565c0; padding: 10px 0; }
+        th { background-color: #e3f2fd; color: #1565c0; padding: 10px 0; text-align: center; }
         td { border: 1px solid #dee2e6; height: 120px; vertical-align: top; padding: 5px; font-size: 0.85em; }
         
         .leave-record { padding: 3px 6px; margin: 2px 0; border-radius: 3px; font-size: 0.9em; border-left: 5px solid #999; }
@@ -27,12 +27,14 @@
 <div id="calendarContainer">
     <div id="searchPanel">
         <div class="controls">
-            <input type="text" id="nameSearch" placeholder="輸入姓名搜尋..." oninput="updateView()">
+            <select id="nameSearch" onchange="updateView()">
+                <option value="">所有人員</option>
+            </select>
             <input type="date" id="startDate" onchange="updateView()"> 至 
             <input type="date" id="endDate" onchange="updateView()">
             <button onclick="clearSearch()">清除重設</button>
         </div>
-        <div id="statsSummary">統計摘要：計算中...</div>
+        <div id="statsSummary">統計摘要：請稍候...</div>
     </div>
 
     <div id="calendarHeader">
@@ -59,21 +61,29 @@
             const c = r.split(',');
             return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), duration: parseFloat(c[4]) || 0, note: c[5]?.trim() };
         });
+        
+        // 自動填充下拉選單
+        const names = [...new Set(leaveRecords.map(r => r.name))].sort();
+        const select = document.getElementById('nameSearch');
+        names.forEach(n => {
+            let opt = document.createElement('option');
+            opt.value = n; opt.textContent = n;
+            select.appendChild(opt);
+        });
         updateView();
     }
 
     function updateView() {
-        const nameKey = document.getElementById('nameSearch').value.toLowerCase();
+        const nameKey = document.getElementById('nameSearch').value;
         const startKey = document.getElementById('startDate').value;
         const endKey = document.getElementById('endDate').value;
         
         const filtered = leaveRecords.filter(r => {
-            return r.name.toLowerCase().includes(nameKey) && 
+            return (nameKey === "" || r.name === nameKey) && 
                    (startKey ? r.end >= startKey : true) && 
                    (endKey ? r.start <= endKey : true);
         });
 
-        // 計算統計
         const stats = {};
         filtered.forEach(r => { stats[r.type] = (stats[r.type] || 0) + r.duration; });
         document.getElementById('statsSummary').textContent = "統計摘要：" + 
@@ -102,9 +112,8 @@
             cell.innerHTML = `<strong>${d}</strong>`;
             
             filteredData.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                // 恢復金牛頓顏色邏輯
                 let style = "background-color: #eee; border-left: 5px solid #999;";
-                if (r.type.includes('金牛頓')) style = "background-color: #0d47a1; color: #fff; border-left: 5px solid #002171;";
+                if (r.type && r.type.includes('金牛頓')) style = "background-color: #0d47a1; color: #fff; border-left: 5px solid #002171;";
                 cell.innerHTML += `<div class="leave-record" style="${style}">${r.name}<br>${r.note}</div>`;
             });
             row.appendChild(cell);
