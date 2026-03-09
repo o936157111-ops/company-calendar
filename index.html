@@ -6,26 +6,30 @@
     <title>金牛頓公司行事曆</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 10px; background-color: #f8f9fa; margin: 0; }
-        h2 { color: #0d47a1; margin: 10px 0; font-size: 1.5em; text-align: center; }
+        h2 { color: #0d47a1; margin: 10px 0; font-size: 1.8em; text-align: center; }
         
-        #calendarContainer { border: 1px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1000px; margin: 0 auto; }
-        #calendarHeader { background-color: #0d47a1; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        #calendarContainer { border: 2px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1200px; margin: 0 auto; }
+        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { background-color: #e3f2fd; padding: 10px; text-align: center; font-size: 0.9em; }
-        td { border: 1px solid #dee2e6; height: 100px; vertical-align: top; padding: 5px; font-size: 0.85em; overflow: hidden; }
+        th { background-color: #e3f2fd; padding: 10px; text-align: center; font-size: 1em; color: #1565c0; }
         
-        /* 顏色識別系統 */
-        .leave-record { padding: 2px 4px; margin-top: 2px; font-size: 0.8em; text-align: left; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        /* 調整 td 高度與字體大小 */
+        td { border: 1px solid #dee2e6; height: 150px; vertical-align: top; padding: 8px; font-size: 1em; overflow-y: auto; }
         
-        /* 金牛頓活動：深藍底色，白色文字 */
-        .type-activity { background-color: #0d47a1; color: #ffffff; border-left: 3px solid #002171; } 
+        /* 隱藏週末功能 */
+        .hide-weekend .col-sat, .hide-weekend .col-sun { display: none; }
         
-        /* 出差：淺藍底色，深藍文字 */
-        .type-business { background-color: #bbdefb; color: #0d47a1; border-left: 3px solid #1976d2; } 
+        /* 顏色識別系統 (保留深藍底色) */
+        .leave-record { 
+            padding: 4px 6px; margin-top: 4px; font-size: 0.9em; border-radius: 4px; 
+            line-height: 1.3; word-wrap: break-word; margin-bottom: 2px; display: block;
+        }
         
-        /* 其他（預設）：灰色底色，深色文字 */
-        .type-default { background-color: #eeeeee; color: #333; border-left: 3px solid #999; } 
+        /* 金牛頓活動：深藍底色 */
+        .type-activity { background-color: #0d47a1 !important; color: #ffffff !important; border-left: 5px solid #002171 !important; } 
+        .type-business { background-color: #bbdefb !important; color: #0d47a1 !important; border-left: 5px solid #1976d2 !important; } 
+        .type-default { background-color: #eeeeee !important; color: #333 !important; border-left: 5px solid #999 !important; } 
     </style>
 </head>
 <body>
@@ -34,13 +38,16 @@
     
     <div id="calendarContainer">
         <div id="calendarHeader">
-            <button onclick="changeMonth(-1)">◀ 上個月</button>
-            <span id="currentYearMonth" style="font-weight:bold;"></span>
-            <button onclick="changeMonth(1)">下個月 ▶</button>
+            <button onclick="changeMonth(-1)" style="padding: 5px 15px;">◀ 上個月</button>
+            <span id="currentYearMonth" style="font-weight:bold; font-size: 1.2em;"></span>
+            <label style="font-size: 0.9em;"><input type="checkbox" id="toggleWeekend" checked onchange="toggleWeekend()"> 顯示週末</label>
+            <button onclick="changeMonth(1)" style="padding: 5px 15px;">下個月 ▶</button>
         </div>
         <table id="calendar">
             <thead>
-                <tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>
+                <tr>
+                    <th class="col-sun">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-sat">六</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -50,6 +57,11 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
         let leaveRecords = [];
         let currentDisplayDate = new Date();
+
+        function toggleWeekend() {
+            const isChecked = document.getElementById('toggleWeekend').checked;
+            document.getElementById('calendar').classList.toggle('hide-weekend', !isChecked);
+        }
 
         async function fetchData() {
             try {
@@ -73,11 +85,22 @@
             let lastDate = new Date(year, month, 0).getDate();
             let row = document.createElement('tr');
             
-            for(let i=0; i<firstDay; i++) row.appendChild(document.createElement('td'));
+            // 填補月初空格
+            for(let i=0; i<firstDay; i++) {
+                let emptyCell = document.createElement('td');
+                if(i === 0) emptyCell.className = 'col-sun';
+                if(i === 6) emptyCell.className = 'col-sat';
+                row.appendChild(emptyCell);
+            }
             
             for(let d=1; d<=lastDate; d++) {
-                if((firstDay + d - 1) % 7 === 0) { tbody.appendChild(row); row = document.createElement('tr'); }
+                let dayOfWeek = (firstDay + d - 1) % 7;
+                if(dayOfWeek === 0 && d > 1) { tbody.appendChild(row); row = document.createElement('tr'); }
+                
                 let cell = document.createElement('td');
+                if(dayOfWeek === 0) cell.className = 'col-sun';
+                if(dayOfWeek === 6) cell.className = 'col-sat';
+                
                 const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 cell.innerHTML = `<strong>${d}</strong>`;
                 
@@ -86,12 +109,14 @@
                     if (r.type && r.type.includes('金牛頓')) colorClass = 'type-activity';
                     else if (r.type === '出差') colorClass = 'type-business';
                     
-                    const displayText = r.note ? `${r.name}:${r.note}` : r.name;
-                    cell.innerHTML += `<div class="leave-record ${colorClass}" title="${displayText}">${displayText}</div>`;
+                    // 使用 <br> 達到兩行顯示
+                    const displayText = r.note ? `${r.name}<br>${r.note}` : r.name;
+                    cell.innerHTML += `<div class="leave-record ${colorClass}">${displayText}</div>`;
                 });
                 row.appendChild(cell);
             }
             tbody.appendChild(row);
+            toggleWeekend();
         }
 
         function changeMonth(d) { 
