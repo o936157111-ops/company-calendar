@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金牛頓公司行事曆</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 10px; background-color: #f8f9fa; margin: 0; }
+        h2 { color: #0d47a1; margin: 10px 0; font-size: 1.2em; }
+        #calendarContainer { border: 1px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; }
+        #calendarHeader { background-color: #0d47a1; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #dee2e6; padding: 5px; text-align: center; font-size: 0.8em; height: 80px; vertical-align: top; }
+        .holiday-label { color: #d32f2f; font-size: 0.7em; display: block; }
+        .leave-record { padding: 2px; margin-top: 2px; font-size: 0.75em; text-align: left; background: #eee; border-left: 3px solid #673ab7; }
+    </style>
+</head>
+<body>
+    <h2>📊 金牛頓公司行事曆</h2>
+    <div id="calendarContainer">
+        <div id="calendarHeader">
+            <button onclick="changeMonth(-1)">◀</button>
+            <span id="currentYearMonth"></span>
+            <button onclick="changeMonth(1)">▶</button>
+        </div>
+        <table id="calendar"><thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody></tbody></table>
+    </div>
+
+    <script>
+        let currentDisplayDate = new Date();
+        let leaveRecords = [];
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?output=csv';
+
+        async function fetchData() {
+            try {
+                const response = await fetch(CSV_URL);
+                const text = await response.text();
+                const rows = text.split('\n').slice(1);
+                leaveRecords = rows.map(row => {
+                    const [name, type, start, end, dur, note] = row.split(',');
+                    return { name, type, start: start?.trim(), end: end?.trim(), note: note?.trim() };
+                });
+                renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
+            } catch (e) { console.error("同步失敗", e); }
+        }
+
+        function renderCalendar(year, month) {
+            document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
+            const tbody = document.querySelector('#calendar tbody');
+            tbody.innerHTML = '';
+            let date = 1, firstDay = new Date(year, month - 1, 1).getDay(), lastDate = new Date(year, month, 0).getDate();
+            let row = document.createElement('tr');
+            for(let i=0; i<firstDay; i++) row.appendChild(document.createElement('td'));
+            
+            for(let d=1; d<=lastDate; d++) {
+                if((firstDay + d - 1) % 7 === 0) { tbody.appendChild(row); row = document.createElement('tr'); }
+                let cell = document.createElement('td');
+                const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                cell.innerHTML = `<strong>${d}</strong>`;
+                leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
+                    cell.innerHTML += `<div class="leave-record">${r.name}</div>`;
+                });
+                row.appendChild(cell);
+            }
+            tbody.appendChild(row);
+        }
+
+        function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); fetchData(); }
+        fetchData();
+    </script>
+</body>
+</html>
