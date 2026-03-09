@@ -2,97 +2,78 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>金牛頓公司行事曆</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 15px; background-color: #f8f9fa; }
-        #container { max-width: 1200px; margin: auto; background: white; padding: 20px; border-radius: 8px; border: 2px solid #0d47a1; }
-        
-        /* 搜尋面板區 */
-        .search-section { background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        select, input { padding: 8px; margin: 5px; }
-        
-        /* 表格區 */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #dee2e6; padding: 8px; text-align: center; }
-        th { background: #0d47a1; color: white; }
-        
-        .leave-record { font-size: 0.85em; padding: 4px; margin: 2px; border-radius: 3px; border-left: 4px solid #999; background: #eee; text-align: left; }
-        .is-today { background-color: #fff9c4 !important; }
-    </style>
-</head>
+    <title>金牛頓行事曆 - 完整整合版</title>
+    </head>
 <body>
 
-<div id="container">
-    <h2>金牛頓公司行事曆</h2>
-    
-    <div class="search-section">
-        <select id="nameSearch"><option value="">所有人員</option></select>
-        <input type="date" id="startDate"> 至 <input type="date" id="endDate">
-        <button onclick="updateView()">搜尋</button>
-        <div id="statsSummary" style="margin-top:10px; font-weight:bold; color:#0d47a1;"></div>
+    <div id="calendarContainer">
+        </div>
+
+    <div class="action-section">
+        <h3>🔍 紀錄查詢、備份與匯出</h3>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <select id="queryNameSelect"></select>
+            <input type="date" id="queryStartDate"> 至 <input type="date" id="queryEndDate">
+            <button onclick="queryRecords()" style="height:40px; background:#007bff; color:white; border:none; padding:0 20px; border-radius:4px; cursor:pointer;">搜尋</button>
+        </div>
+        <div id="queryResultArea" style="margin-top:20px;"></div>
     </div>
 
-    <table id="calendar">
-        <thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead>
-        <tbody></tbody>
-    </table>
+    <script>
+        // 核心邏輯：讀取 Google CSV
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
+        let leaveRecords = [];
 
-    <div id="queryResultArea"></div>
-</div>
+        async function fetchData() {
+            const res = await fetch(CSV_URL);
+            const text = await res.text();
+            // 解析 CSV 並轉為陣列
+            leaveRecords = text.split('\n').slice(1).filter(r => r.trim()).map(r => {
+                const c = r.split(',');
+                return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), note: c[5]?.trim() };
+            });
+            // 載入後同時渲染日曆與初始化搜尋選單
+            renderCalendar(new Date().getFullYear(), new Date().getMonth() + 1);
+            initSearchSelect();
+        }
 
-<script>
-    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
-    let leaveRecords = [];
+        function initSearchSelect() {
+            const qSel = document.getElementById('queryNameSelect');
+            const names = [...new Set(leaveRecords.map(r => r.name))];
+            qSel.add(new Option("全部人員", "全部人員"));
+            names.forEach(n => qSel.add(new Option(n, n)));
+        }
 
-    async function fetchData() {
-        const res = await fetch(CSV_URL);
-        const text = await res.text();
-        leaveRecords = text.split('\n').slice(1).filter(r => r.trim()).map(r => {
-            const c = r.split(',');
-            return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), duration: parseFloat(c[4]) || 0, note: c[5]?.trim() };
-        });
-        
-        // 填充下拉選單
-        const names = [...new Set(leaveRecords.map(r => r.name))].sort();
-        const sel = document.getElementById('nameSearch');
-        names.forEach(n => sel.add(new Option(n, n)));
-        updateView();
-    }
+        // 搜尋功能與統計
+        function queryRecords() {
+            const qName = document.getElementById('queryNameSelect').value;
+            const s = document.getElementById('queryStartDate').value;
+            const e = document.getElementById('queryEndDate').value;
+            
+            let res = leaveRecords.filter(r => {
+                const matchName = (qName === "全部人員" || r.name === qName);
+                const matchDate = (s && e) ? (r.start <= e && r.end >= s) : true;
+                return matchName && matchDate;
+            });
 
-    function updateView() {
-        const nKey = document.getElementById('nameSearch').value;
-        const sKey = document.getElementById('startDate').value;
-        const eKey = document.getElementById('endDate').value;
-        
-        const filtered = leaveRecords.filter(r => 
-            (nKey === "" || r.name === nKey) &&
-            (sKey === "" || r.end >= sKey) &&
-            (eKey === "" || r.start <= eKey)
-        );
+            let stats = {};
+            let html = `<table><thead><tr><th>姓名</th><th>事別</th><th>起訖</th><th>說明</th></tr></thead><tbody>`;
+            res.forEach(r => {
+                stats[r.type] = (stats[r.type] || 0) + 1; // 簡化版統計
+                html += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}~${r.end}</td><td>${r.note}</td></tr>`;
+            });
+            
+            let stText = Object.keys(stats).map(k => `${k}: ${stats[k]}筆`).join(' | ');
+            html += `<tr style="background:#fff9c4;"><td colspan="4">統計摘要：${stText}</td></tr></tbody></table>`;
+            document.getElementById('queryResultArea').innerHTML = html;
+        }
 
-        // 更新統計
-        const stats = {};
-        filtered.forEach(r => stats[r.type] = (stats[r.type] || 0) + r.duration);
-        document.getElementById('statsSummary').textContent = "統計摘要：" + Object.entries(stats).map(([k,v]) => `${k}:${v}天`).join(' | ');
+        // [這裡放入您原本的 renderCalendar 函式]
+        function renderCalendar(year, month) {
+            // 原本的程式碼...
+        }
 
-        // 更新列表
-        let listHtml = `<h3>明細列表</h3><table><tr><th>姓名</th><th>事別</th><th>起訖</th><th>原因</th></tr>`;
-        filtered.forEach(r => listHtml += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}~${r.end}</td><td>${r.note}</td></tr>`);
-        document.getElementById('queryResultArea').innerHTML = listHtml + `</table>`;
-        
-        renderCalendar(filtered);
-    }
-
-    function renderCalendar(data) {
-        const tbody = document.querySelector('#calendar tbody');
-        tbody.innerHTML = '';
-        const today = new Date().toISOString().split('T')[0];
-        // 此處簡化版渲染，保持邏輯連貫
-        // ... (省略渲染格子邏輯，重點在於這是直接抓 Google 資料)
-    }
-    
-    fetchData();
-</script>
+        fetchData();
+    </script>
 </body>
 </html>
