@@ -15,14 +15,13 @@
         th { background-color: #e3f2fd; padding: 12px; text-align: center; font-size: 1em; color: #1565c0; }
         td { border: 1px solid #dee2e6; height: 120px; vertical-align: top; padding: 8px; font-size: 0.9em; overflow: hidden; }
         
-        /* 顏色識別系統 */
+        /* 樣式優先級強化 */
         .leave-record { 
             padding: 3px 6px; margin-top: 3px; font-size: 0.85em; text-align: left; 
             border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
             cursor: pointer; margin-bottom: 2px;
         }
         
-        /* 確保樣式優先級 */
         .type-activity { background-color: #0d47a1 !important; color: #ffffff !important; border-left: 4px solid #002171 !important; } 
         .type-business { background-color: #bbdefb !important; color: #0d47a1 !important; border-left: 4px solid #1976d2 !important; } 
         .type-default { background-color: #eeeeee !important; color: #333 !important; border-left: 4px solid #999 !important; } 
@@ -57,9 +56,17 @@
                 const text = await response.text();
                 const rows = text.split('\n').slice(1);
                 leaveRecords = rows.filter(row => row.trim() !== "").map(row => {
-                    const [name, type, start, end, dur, note] = row.split(',');
-                    return { name: name?.trim(), type: type?.trim(), start: start?.trim(), end: end?.trim(), note: note?.trim() };
+                    const cols = row.split(',');
+                    // 清除前後空白，避免判斷失敗
+                    return { 
+                        name: cols[0]?.trim(), 
+                        type: cols[1]?.trim(), 
+                        start: cols[2]?.trim(), 
+                        end: cols[3]?.trim(), 
+                        note: cols[5]?.trim() 
+                    };
                 });
+                console.log("資料讀取完成:", leaveRecords); // 這裡可以幫您除錯
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
             } catch (e) { console.error("資料讀取失敗", e); }
         }
@@ -83,10 +90,11 @@
                 
                 leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                     let colorClass = 'type-default';
-                    // 這裡加了更強的判斷，確保「金牛頓活動」一定會被抓到
-                    if (r.type && r.type.includes('金牛頓')) {
+                    // 更寬鬆的判斷條件：只要事別裡含有"活動"或者"金牛頓"
+                    const typeStr = r.type || "";
+                    if (typeStr.includes('金牛頓') || typeStr.includes('活動')) {
                         colorClass = 'type-activity';
-                    } else if (r.type && r.type.includes('出差')) {
+                    } else if (typeStr.includes('出差')) {
                         colorClass = 'type-business';
                     }
                     
