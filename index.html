@@ -2,27 +2,56 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>金牛頓公司活動行事曆</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金牛頓公司行事曆</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; }
-        h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; }
-        .admin-only { display: none; }
-        table { width: 100%; border-collapse: collapse; background-color: white; }
-        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
-        .leave-record { padding: 3px; font-size: 0.8em; text-align: left; background: #eee; margin-top: 2px; }
+        body { font-family: 'Segoe UI', sans-serif; padding: 10px; background-color: #f8f9fa; margin: 0; }
+        h2 { color: #0d47a1; margin: 10px 0; font-size: 1.5em; text-align: center; }
+        
+        #calendarContainer { border: 1px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1000px; margin: 0 auto; }
+        #calendarHeader { background-color: #0d47a1; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* 關鍵：強制表格固定寬高 */
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { background-color: #e3f2fd; padding: 10px; text-align: center; font-size: 0.9em; }
+        td { 
+            border: 1px solid #dee2e6; 
+            height: 100px; /* 固定高度 */
+            vertical-align: top; 
+            padding: 5px; 
+            font-size: 0.85em;
+            overflow: hidden; 
+        }
+        
+        .leave-record { 
+            padding: 2px 4px; 
+            margin-top: 2px; 
+            font-size: 0.8em; 
+            text-align: left; 
+            background: #e1f5fe; 
+            border-radius: 3px;
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
     </style>
 </head>
 <body>
 
-    <h2>📊 金牛頓公司行事曆 (已串接 Google 表格)</h2>
+    <h2>金牛頓公司行事曆</h2>
+    
     <div id="calendarContainer">
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
-            <span id="currentYearMonth"></span>
+            <span id="currentYearMonth" style="font-weight:bold;"></span>
             <button onclick="changeMonth(1)">下個月 ▶</button>
         </div>
-        <table id="calendar"><thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody></tbody></table>
+        <table id="calendar">
+            <thead>
+                <tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <script>
@@ -30,32 +59,28 @@
         let leaveRecords = [];
         let currentDisplayDate = new Date();
 
-        // 核心：從 Google 表格抓取資料並同步
-        async function syncDataFromGoogle() {
+        async function fetchData() {
             try {
                 const response = await fetch(CSV_URL);
                 const text = await response.text();
-                const rows = text.split('\n').slice(1); // 跳過標題
+                const rows = text.split('\n').slice(1);
                 leaveRecords = rows.filter(row => row.trim() !== "").map(row => {
                     const [name, type, start, end, dur, note] = row.split(',');
-                    return { 
-                        name: name?.trim(), 
-                        type: type?.trim(), 
-                        start: start?.trim(), 
-                        end: end?.trim(), 
-                        note: note?.trim() 
-                    };
+                    return { name: name?.trim(), start: start?.trim(), end: end?.trim(), note: note?.trim() };
                 });
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-            } catch (e) { console.error("資料同步失敗", e); }
+            } catch (e) { console.error("資料讀取失敗", e); }
         }
 
         function renderCalendar(year, month) {
             document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
             const tbody = document.querySelector('#calendar tbody');
             tbody.innerHTML = '';
-            let date = 1, firstDay = new Date(year, month - 1, 1).getDay(), lastDate = new Date(year, month, 0).getDate();
+            
+            let firstDay = new Date(year, month - 1, 1).getDay();
+            let lastDate = new Date(year, month, 0).getDate();
             let row = document.createElement('tr');
+            
             for(let i=0; i<firstDay; i++) row.appendChild(document.createElement('td'));
             
             for(let d=1; d<=lastDate; d++) {
@@ -63,18 +88,21 @@
                 let cell = document.createElement('td');
                 const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 cell.innerHTML = `<strong>${d}</strong>`;
+                
                 leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                    cell.innerHTML += `<div class="leave-record">${r.name}-${r.note}</div>`;
+                    cell.innerHTML += `<div class="leave-record" title="${r.name}: ${r.note}">${r.name}</div>`;
                 });
                 row.appendChild(cell);
             }
             tbody.appendChild(row);
         }
 
-        function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); }
+        function changeMonth(d) { 
+            currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); 
+            renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); 
+        }
 
-        // 初始化
-        syncDataFromGoogle();
+        fetchData();
     </script>
 </body>
 </html>
