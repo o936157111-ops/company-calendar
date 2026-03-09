@@ -13,27 +13,19 @@
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background-color: #e3f2fd; padding: 10px; text-align: center; font-size: 0.9em; }
-        td { 
-            border: 1px solid #dee2e6; 
-            height: 100px; 
-            vertical-align: top; 
-            padding: 5px; 
-            font-size: 0.85em;
-            overflow: hidden; 
-        }
+        td { border: 1px solid #dee2e6; height: 100px; vertical-align: top; padding: 5px; font-size: 0.85em; overflow: hidden; }
         
-        .leave-record { 
-            padding: 2px 4px; 
-            margin-top: 2px; 
-            font-size: 0.8em; 
-            text-align: left; 
-            background: #e1f5fe; 
-            border-radius: 3px;
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            border-left: 3px solid #0288d1;
-        }
+        /* 顏色識別系統 */
+        .leave-record { padding: 2px 4px; margin-top: 2px; font-size: 0.8em; text-align: left; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        /* 金牛頓活動：深藍底色，白色文字 */
+        .type-activity { background-color: #0d47a1; color: #ffffff; border-left: 3px solid #002171; } 
+        
+        /* 出差：淺藍底色，深藍文字 */
+        .type-business { background-color: #bbdefb; color: #0d47a1; border-left: 3px solid #1976d2; } 
+        
+        /* 其他（預設）：灰色底色，深色文字 */
+        .type-default { background-color: #eeeeee; color: #333; border-left: 3px solid #999; } 
     </style>
 </head>
 <body>
@@ -66,7 +58,7 @@
                 const rows = text.split('\n').slice(1);
                 leaveRecords = rows.filter(row => row.trim() !== "").map(row => {
                     const [name, type, start, end, dur, note] = row.split(',');
-                    return { name: name?.trim(), start: start?.trim(), end: end?.trim(), note: note?.trim() };
+                    return { name: name?.trim(), type: type?.trim(), start: start?.trim(), end: end?.trim(), note: note?.trim() };
                 });
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
             } catch (e) { console.error("資料讀取失敗", e); }
@@ -90,9 +82,12 @@
                 cell.innerHTML = `<strong>${d}</strong>`;
                 
                 leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                    // 這裡修改顯示格式：姓名 + 說明
+                    let colorClass = 'type-default';
+                    if (r.type && r.type.includes('金牛頓')) colorClass = 'type-activity';
+                    else if (r.type === '出差') colorClass = 'type-business';
+                    
                     const displayText = r.note ? `${r.name}:${r.note}` : r.name;
-                    cell.innerHTML += `<div class="leave-record" title="${displayText}">${displayText}</div>`;
+                    cell.innerHTML += `<div class="leave-record ${colorClass}" title="${displayText}">${displayText}</div>`;
                 });
                 row.appendChild(cell);
             }
