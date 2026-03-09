@@ -5,63 +5,106 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>金牛頓公司活動行事曆</title>
     <style>
-        /* (為了節省篇幅，此處省略，請務必將您原檔案中的所有 <style> 內容貼回此處) */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
+        h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
+        select, input[type="date"], input[type="text"], input[type="number"], textarea { height: 40px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
+        th { background-color: #e3f2fd; color: #0d47a1; }
+        .admin-only { display: none; } 
+        #calendarContainer { margin-top: 30px; border: 1px solid #0d47a1; border-radius: 8px; overflow: hidden; background: white; }
+        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        #calendar td { height: 110px; vertical-align: top; width: 14.28%; }
+        .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
+        .activity-record { background-color: #673ab7 !important; color: white !important; }
+        .holiday-record { background-color: #e91e63 !important; color: white !important; }
+        .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
     </style>
 </head>
 <body>
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2>📊 金牛頓公司行事曆</h2>
+        <button id="adminLoginBtn" onclick="toggleAdminMode()" style="padding:8px 16px; cursor:pointer;">系統管理</button>
+    </div>
+
+    <table id="inputTable" class="admin-only">
+        <tbody><tr>
+            <td><select id="inputNameSelect" onchange="toggleLeaveTypeOptions()"></select></td>
+            <td><select id="inputLeaveType" onchange="toggleInputFields()"></select></td>
+            <td><input type="date" id="inputStartDate"></td>
+            <td><input type="date" id="inputEndDate"></td>
+            <td><input type="text" id="inputNote"></td>
+            <td><button onclick="addLeaveRecord()" style="background:#4CAF50; color:white; border:none; padding:10px;">新增</button></td>
+        </tr></tbody>
+    </table>
+
+    <div id="calendarContainer">
+        <div id="calendarHeader">
+            <button onclick="changeMonth(-1)">◀</button>
+            <span id="currentYearMonth"></span>
+            <button onclick="changeMonth(1)">▶</button>
+        </div>
+        <table id="calendar"><thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody></tbody></table>
+    </div>
+
     <script>
-        // 設定 Google Sheet CSV 連結
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
+        let leaveRecords = [];
+        let currentDisplayDate = new Date();
+        const nameList = ["請選擇人員", "金牛頓", "ERIC", "JAMES", "方順黌", "王冠峯", "余品橋", "李佩娟", "高欣宜", "陳秀燕", "陳品鈞", "陳靖昂", "陳慧真", "曾晨杰", "楊添仰", "詹淑敏", "戴政宏", "蘇威丞"];
 
-        // [將您的原始 JavaScript 變數與函式區塊放在這裡，例如：isAdmin, nameList, addLeaveRecord 等]
-        // ... (保持您的原始功能代碼不動) ...
-
-        // 核心修改：雲端同步資料函式
-        async function loadDataFromGoogle() {
+        // 核心載入邏輯：直接抓取雲端資料
+        async function loadData() {
             try {
-                const response = await fetch(CSV_URL);
-                const text = await response.text();
+                const res = await fetch(CSV_URL);
+                const text = await res.text();
                 const rows = text.split('\n').slice(1);
-                
-                // 將 Google 資料轉換為您原本使用的 leaveRecords 陣列結構
                 leaveRecords = rows.filter(r => r.trim()).map(r => {
                     const c = r.split(',');
-                    return { 
-                        id: Math.random().toString(36).substr(2, 9), 
-                        name: c[0]?.trim(), 
-                        type: c[1]?.trim(), 
-                        start: c[2]?.trim(), 
-                        end: c[3]?.trim(), 
-                        duration: parseFloat(c[4]) || 0,
-                        displayDuration: c[4]?.trim(),
-                        note: c[5]?.trim() 
-                    };
+                    return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), note: c[5]?.trim(), id: Math.random() };
                 });
-                
-                // 讀取完成後，呼叫您原本的 UI 更新邏輯
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-                if (typeof renderSuggestions === 'function') renderSuggestions();
-            } catch (err) {
-                console.error("雲端同步失敗", err);
+            } catch (e) { alert("無法讀取雲端資料"); }
+        }
+
+        // 渲染函數 (保留原樣)
+        function renderCalendar(year, month) {
+            document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
+            const tbody = document.querySelector('#calendar tbody');
+            tbody.innerHTML = '';
+            const firstDay = new Date(year, month - 1, 1).getDay();
+            const lastDate = new Date(year, month, 0).getDate();
+            let date = 1;
+            for (let i = 0; i < 6; i++) {
+                let row = document.createElement('tr');
+                for (let j = 0; j < 7; j++) {
+                    let cell = document.createElement('td');
+                    if (i === 0 && j < firstDay || date > lastDate) { cell.style.background = "#f9f9f9"; }
+                    else {
+                        const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
+                        cell.innerHTML = `<strong>${date}</strong>`;
+                        leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
+                            cell.innerHTML += `<div class="leave-record">${r.name}-${r.note}</div>`;
+                        });
+                        date++;
+                    }
+                    row.appendChild(cell);
+                }
+                tbody.appendChild(row);
+                if (date > lastDate) break;
             }
         }
 
-        // 修改初始化邏輯
+        // 初始化
         document.addEventListener('DOMContentLoaded', () => {
-            // 執行雲端載入，取代原本的 localStorage 讀取
-            loadDataFromGoogle();
-            
-            // 下面保留您原本的初始化邏輯 (例如選單渲染)
+            loadData(); // 這裡啟動雲端抓取
             const sel = document.getElementById('inputNameSelect');
-            const qSel = document.getElementById('queryNameSelect');
-            if (sel && qSel) {
-                nameList.forEach(n => { sel.add(new Option(n, n)); qSel.add(new Option(n, n)); });
-                sel.options[0].disabled = true;
-                qSel.options[0].text = "全部人員";
-                qSel.options[0].value = "全部人員";
-            }
-            if (typeof toggleLeaveTypeOptions === 'function') toggleLeaveTypeOptions();
+            nameList.forEach(n => sel.add(new Option(n, n)));
         });
+
+        function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); }
+        function toggleAdminMode() { isAdmin = !isAdmin; document.querySelectorAll('.admin-only').forEach(el => el.style.display = isAdmin ? 'block' : 'none'); }
     </script>
 </body>
 </html>
