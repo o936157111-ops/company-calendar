@@ -4,26 +4,37 @@
     <meta charset="UTF-8">
     <title>金牛頓公司行事曆</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 15px; background-color: #f8f9fa; margin: 0; }
-        h2 { color: #0d47a1; margin: 10px 0; font-size: 1.5em; text-align: center; }
-        #calendarContainer { border: 2px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1000px; margin: 0 auto; }
-        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        /* 強制重置邊距與寬度 */
+        body { font-family: sans-serif; padding: 20px; background-color: #f8f9fa; margin: 0; }
+        
+        /* 強制將容器寬度拉到 95% 或最大 1400px，確保頁寬不縮水 */
+        #calendarContainer { 
+            border: 2px solid #0d47a1; background: white; border-radius: 8px; 
+            overflow: hidden; width: 95%; max-width: 1400px; margin: 0 auto; 
+        }
+        
+        #calendarHeader { background-color: #0d47a1; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { background-color: #e3f2fd; color: #1565c0; padding: 10px; text-align: center; font-size: 0.9em; height: 40px; }
-        td { border: 1px solid #dee2e6; height: 150px; vertical-align: top; padding: 5px; font-size: 0.85em; overflow-y: auto; }
-        .hide-weekend .col-sat, .hide-weekend .col-sun { display: none; }
-        /* 今日特別底色 */
+        th { background-color: #e3f2fd; color: #1565c0; padding: 15px; text-align: center; font-size: 1.1em; }
+        
+        /* 日期格子的基礎樣式 */
+        td { border: 1px solid #dee2e6; height: 160px; vertical-align: top; padding: 10px; }
+        
+        /* 今日特別底色：強硬的 !important 寫法 */
         .is-today { background-color: #fff9c4 !important; }
+        
+        .hide-weekend .col-sat, .hide-weekend .col-sun { display: none; }
     </style>
 </head>
 <body>
-    <h2>金牛頓公司行事曆</h2>
+
     <div id="calendarContainer">
         <div id="calendarHeader">
-            <button onclick="changeMonth(-1)">◀ 上個月</button>
-            <span id="currentYearMonth" style="font-weight:bold;"></span>
+            <button onclick="changeMonth(-1)" style="padding: 10px 20px;">◀ 上個月</button>
+            <span id="currentYearMonth" style="font-weight:bold; font-size: 1.5em;"></span>
             <label><input type="checkbox" id="toggleWeekend" checked onchange="toggleWeekend()"> 顯示週末</label>
-            <button onclick="changeMonth(1)">下個月 ▶</button>
+            <button onclick="changeMonth(1)" style="padding: 10px 20px;">下個月 ▶</button>
         </div>
         <table id="calendar">
             <thead><tr><th class="col-sun">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-sat">六</th></tr></thead>
@@ -57,8 +68,6 @@
             document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
             const tbody = document.querySelector('#calendar tbody');
             tbody.innerHTML = '';
-            
-            // 取得今天的日期字串以便比對
             const todayStr = new Date().toISOString().split('T')[0];
             
             let firstDay = new Date(year, month - 1, 1).getDay();
@@ -81,17 +90,14 @@
                 if(dayOfWeek === 6) cell.className = 'col-sat';
                 
                 const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                
-                // 標記今天
-                if (ds === todayStr) cell.classList.add('is-today');
+                if (ds === todayStr) cell.className += ' is-today';
                 
                 cell.innerHTML = `<strong>${d}</strong>`;
                 
                 leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                     let bg = "#eee", color = "#333", border = "#999";
-                    if (r.type && (r.type.includes('金牛頓'))) { bg = "#0d47a1"; color = "#fff"; border = "#002171"; }
+                    if (r.type && r.type.includes('金牛頓')) { bg = "#0d47a1"; color = "#fff"; border = "#002171"; }
                     else if (r.type && r.type.includes('出差')) { bg = "#bbdefb"; color = "#0d47a1"; border = "#1976d2"; }
-                    
                     cell.innerHTML += `<div style="background-color:${bg}; color:${color}; border-left:5px solid ${border}; padding:4px 6px; margin:4px 0; font-size:0.9em; border-radius:4px;">${r.name}<br>${r.note}</div>`;
                 });
                 row.appendChild(cell);
