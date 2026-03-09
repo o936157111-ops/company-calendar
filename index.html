@@ -12,19 +12,22 @@
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th, td { border: 1px solid #dee2e6; height: 150px; vertical-align: top; padding: 8px; font-size: 1em; overflow-y: auto; }
-        th { background-color: #e3f2fd; color: #1565c0; }
+        
+        /* 標題欄位：保持低高度，不佔空間 */
+        th { background-color: #e3f2fd; color: #1565c0; padding: 10px 0; height: 40px; text-align: center; font-size: 1em; }
+        
+        /* 日期格子：維持高度以容納多行文字 */
+        td { border: 1px solid #dee2e6; height: 150px; vertical-align: top; padding: 8px; font-size: 1em; overflow-y: auto; }
         
         .hide-weekend .col-sat, .hide-weekend .col-sun { display: none; }
         
-        /* 最終定稿：使用 !important 強制覆蓋 */
         .leave-record { 
             padding: 4px 6px; margin-top: 4px; font-size: 0.9em; border-radius: 4px; 
             line-height: 1.3; word-wrap: break-word; margin-bottom: 2px;
             display: block; 
         }
         
-        /* 這些樣式定義已明確為重要級別 */
+        /* 強制顏色生效 */
         .type-activity { background-color: #0d47a1 !important; color: #ffffff !important; border-left: 5px solid #002171 !important; } 
         .type-business { background-color: #bbdefb !important; color: #0d47a1 !important; border-left: 5px solid #1976d2 !important; } 
         .type-default { background-color: #eeeeee !important; color: #333 !important; border-left: 5px solid #999 !important; } 
@@ -103,6 +106,7 @@
                 
                 leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                     let colorClass = 'type-default';
+                    // 這裡再次確認判斷式，確保字串符合即套用樣式
                     if (r.type && r.type.includes('金牛頓')) colorClass = 'type-activity';
                     else if (r.type && r.type.includes('出差')) colorClass = 'type-business';
                     
