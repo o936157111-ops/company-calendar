@@ -2,31 +2,44 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>金牛頓公司行事曆</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 10px; background-color: #f8f9fa; margin: 0; }
-        h2 { color: #0d47a1; margin: 10px 0; font-size: 1.8em; text-align: center; }
-        #calendarContainer { border: 2px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1200px; margin: 0 auto; }
+        body { font-family: 'Segoe UI', sans-serif; padding: 15px; background-color: #f8f9fa; margin: 0; }
+        h2 { color: #0d47a1; margin: 15px 0; font-size: 1.8em; text-align: center; }
+        
+        #calendarContainer { border: 2px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1200px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background-color: #e3f2fd; color: #1565c0; padding: 10px 0; height: 40px; text-align: center; font-size: 1em; }
         td { border: 1px solid #dee2e6; height: 150px; vertical-align: top; padding: 8px; font-size: 1em; overflow-y: auto; }
+        
         .hide-weekend .col-sat, .hide-weekend .col-sun { display: none; }
+        
+        .leave-record { 
+            padding: 4px 6px; margin-top: 4px; font-size: 0.95em; border-radius: 4px; 
+            line-height: 1.3; word-wrap: break-word; margin-bottom: 3px; display: block;
+            border-left: 5px solid #999;
+        }
     </style>
 </head>
 <body>
 
     <h2>金牛頓公司行事曆</h2>
+    
     <div id="calendarContainer">
         <div id="calendarHeader">
-            <button onclick="changeMonth(-1)">◀ 上個月</button>
-            <span id="currentYearMonth" style="font-weight:bold;"></span>
-            <label><input type="checkbox" id="toggleWeekend" checked onchange="toggleWeekend()"> 顯示週末</label>
-            <button onclick="changeMonth(1)">下個月 ▶</button>
+            <button onclick="changeMonth(-1)" style="padding: 5px 15px;">◀ 上個月</button>
+            <span id="currentYearMonth" style="font-weight:bold; font-size: 1.2em;"></span>
+            <label style="font-size: 0.9em;"><input type="checkbox" id="toggleWeekend" checked onchange="toggleWeekend()"> 顯示週末</label>
+            <button onclick="changeMonth(1)" style="padding: 5px 15px;">下個月 ▶</button>
         </div>
         <table id="calendar">
             <thead>
-                <tr><th class="col-sun">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-sat">六</th></tr>
+                <tr>
+                    <th class="col-sun">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-sat">六</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -46,12 +59,13 @@
             try {
                 const response = await fetch(CSV_URL);
                 const text = await response.text();
-                leaveRecords = text.split('\n').slice(1).filter(r => r.trim()).map(r => {
+                const rows = text.split('\n').slice(1);
+                leaveRecords = rows.filter(r => r.trim()).map(r => {
                     const c = r.split(',');
                     return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), note: c[5]?.trim() };
                 });
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("資料讀取失敗", e); }
         }
 
         function renderCalendar(year, month) {
@@ -79,12 +93,14 @@
                 cell.innerHTML = `<strong>${d}</strong>`;
                 
                 leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                    // 這裡直接賦予顏色，不依賴 class
-                    let bg = "#eee", color = "#333", border = "#999";
-                    if (r.type && r.type.includes('金牛頓')) { bg = "#0d47a1"; color = "#fff"; border = "#002171"; }
-                    else if (r.type && r.type.includes('出差')) { bg = "#bbdefb"; color = "#0d47a1"; border = "#1976d2"; }
-                    
-                    cell.innerHTML += `<div style="background-color:${bg}; color:${color}; border-left:5px solid ${border}; padding:4px 6px; margin:4px 0; font-size:0.9em; border-radius:4px;">${r.name}<br>${r.note}</div>`;
+                    // 極度寬鬆判斷與 inline style 強制渲染
+                    let style = "background-color: #eee; color: #333; border-left: 5px solid #999;";
+                    if (r.type && r.type.indexOf('金牛頓') !== -1) { 
+                        style = "background-color: #0d47a1; color: #fff; border-left: 5px solid #002171;"; 
+                    } else if (r.type && r.type.indexOf('出差') !== -1) { 
+                        style = "background-color: #bbdefb; color: #0d47a1; border-left: 5px solid #1976d2;"; 
+                    }
+                    cell.innerHTML += `<div class="leave-record" style="${style}">${r.name}<br>${r.note}</div>`;
                 });
                 row.appendChild(cell);
             }
