@@ -12,30 +12,13 @@
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { background-color: #e3f2fd; padding: 12px; text-align: center; font-size: 1.1em; color: #1565c0; }
+        th, td { border: 1px solid #dee2e6; height: 150px; vertical-align: top; padding: 8px; font-size: 1em; overflow-y: auto; }
+        th { background-color: #e3f2fd; color: #1565c0; }
         
-        td { 
-            border: 1px solid #dee2e6; 
-            height: 150px; 
-            vertical-align: top; 
-            padding: 8px; 
-            font-size: 1em; 
-            overflow-y: auto; 
-        }
+        /* 隱藏週末用的類別 */
+        .hide-weekend .col-sat, .hide-weekend .col-sun { display: none; }
         
-        /* 顏色識別系統：確保設定了顏色類別 */
-        .leave-record { 
-            padding: 4px 6px; 
-            margin-top: 4px; 
-            font-size: 0.9em; 
-            text-align: left; 
-            border-radius: 4px; 
-            line-height: 1.3; 
-            word-wrap: break-word; 
-            margin-bottom: 2px;
-        }
-        
-        /* 強制顏色生效 */
+        .leave-record { padding: 4px 6px; margin-top: 4px; font-size: 0.9em; border-radius: 4px; line-height: 1.3; word-wrap: break-word; margin-bottom: 2px; }
         .type-activity { background-color: #0d47a1 !important; color: #ffffff !important; border-left: 4px solid #002171 !important; } 
         .type-business { background-color: #bbdefb !important; color: #0d47a1 !important; border-left: 4px solid #1976d2 !important; } 
         .type-default { background-color: #eeeeee !important; color: #333 !important; border-left: 4px solid #999 !important; } 
@@ -49,11 +32,14 @@
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)" style="padding: 5px 15px;">◀ 上個月</button>
             <span id="currentYearMonth" style="font-weight:bold; font-size: 1.2em;"></span>
+            <label style="font-size: 0.9em;"><input type="checkbox" id="toggleWeekend" checked onchange="toggleWeekend()"> 顯示週末</label>
             <button onclick="changeMonth(1)" style="padding: 5px 15px;">下個月 ▶</button>
         </div>
         <table id="calendar">
             <thead>
-                <tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>
+                <tr id="tableHead">
+                    <th class="col-sun">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-sat">六</th>
+                </tr>
             </thead>
             <tbody></tbody>
         </table>
@@ -63,6 +49,12 @@
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
         let leaveRecords = [];
         let currentDisplayDate = new Date();
+
+        // 切換顯示週末
+        function toggleWeekend() {
+            const isChecked = document.getElementById('toggleWeekend').checked;
+            document.getElementById('calendar').classList.toggle('hide-weekend', !isChecked);
+        }
 
         async function fetchData() {
             try {
@@ -86,28 +78,34 @@
             let lastDate = new Date(year, month, 0).getDate();
             let row = document.createElement('tr');
             
-            for(let i=0; i<firstDay; i++) row.appendChild(document.createElement('td'));
+            for(let i=0; i<firstDay; i++) {
+                let emptyCell = document.createElement('td');
+                if(i === 0) emptyCell.className = 'col-sun';
+                if(i === 6) emptyCell.className = 'col-sat';
+                row.appendChild(emptyCell);
+            }
             
             for(let d=1; d<=lastDate; d++) {
-                if((firstDay + d - 1) % 7 === 0) { tbody.appendChild(row); row = document.createElement('tr'); }
+                let dayOfWeek = (firstDay + d - 1) % 7;
+                if(dayOfWeek === 0 && d > 1) { tbody.appendChild(row); row = document.createElement('tr'); }
+                
                 let cell = document.createElement('td');
+                if(dayOfWeek === 0) cell.className = 'col-sun';
+                if(dayOfWeek === 6) cell.className = 'col-sat';
+                
                 const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 cell.innerHTML = `<strong>${d}</strong>`;
                 
                 leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                    // 重新指定判斷顏色類別
                     let colorClass = 'type-default';
-                    const typeStr = r.type || "";
-                    if (typeStr.includes('金牛頓')) colorClass = 'type-activity';
-                    else if (typeStr.includes('出差')) colorClass = 'type-business';
-                    
-                    const displayText = r.note ? `${r.name}<br>${r.note}` : r.name;
-                    // 將類別寫入 div
-                    cell.innerHTML += `<div class="leave-record ${colorClass}">${displayText}</div>`;
+                    if (r.type && r.type.includes('金牛頓')) colorClass = 'type-activity';
+                    else if (r.type && r.type.includes('出差')) colorClass = 'type-business';
+                    cell.innerHTML += `<div class="leave-record ${colorClass}">${r.name}<br>${r.note}</div>`;
                 });
                 row.appendChild(cell);
             }
             tbody.appendChild(row);
+            toggleWeekend(); // 確保重新繪製後狀態正確
         }
 
         function changeMonth(d) { 
