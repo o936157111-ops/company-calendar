@@ -8,9 +8,7 @@
         body { font-family: 'Segoe UI', sans-serif; padding: 15px; background-color: #f8f9fa; margin: 0; }
         h2 { color: #0d47a1; margin: 15px 0; font-size: 1.8em; text-align: center; }
         
-        /* 這裡調整頁寬：將 max-width 從 1000px 改為 1200px，讓版面更開闊 */
         #calendarContainer { border: 2px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1200px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -18,10 +16,16 @@
         td { border: 1px solid #dee2e6; height: 120px; vertical-align: top; padding: 8px; font-size: 0.9em; overflow: hidden; }
         
         /* 顏色識別系統 */
-        .leave-record { padding: 3px 6px; margin-top: 3px; font-size: 0.85em; text-align: left; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
-        .type-activity { background-color: #0d47a1; color: #ffffff; border-left: 4px solid #002171; } 
-        .type-business { background-color: #bbdefb; color: #0d47a1; border-left: 4px solid #1976d2; } 
-        .type-default { background-color: #eeeeee; color: #333; border-left: 4px solid #999; } 
+        .leave-record { 
+            padding: 3px 6px; margin-top: 3px; font-size: 0.85em; text-align: left; 
+            border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            cursor: pointer; margin-bottom: 2px;
+        }
+        
+        /* 確保樣式優先級 */
+        .type-activity { background-color: #0d47a1 !important; color: #ffffff !important; border-left: 4px solid #002171 !important; } 
+        .type-business { background-color: #bbdefb !important; color: #0d47a1 !important; border-left: 4px solid #1976d2 !important; } 
+        .type-default { background-color: #eeeeee !important; color: #333 !important; border-left: 4px solid #999 !important; } 
     </style>
 </head>
 <body>
@@ -79,8 +83,12 @@
                 
                 leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                     let colorClass = 'type-default';
-                    if (r.type && r.type.includes('金牛頓')) colorClass = 'type-activity';
-                    else if (r.type === '出差') colorClass = 'type-business';
+                    // 這裡加了更強的判斷，確保「金牛頓活動」一定會被抓到
+                    if (r.type && r.type.includes('金牛頓')) {
+                        colorClass = 'type-activity';
+                    } else if (r.type && r.type.includes('出差')) {
+                        colorClass = 'type-business';
+                    }
                     
                     const displayText = r.note ? `${r.name}:${r.note}` : r.name;
                     cell.innerHTML += `<div class="leave-record ${colorClass}" title="${displayText}">${displayText}</div>`;
