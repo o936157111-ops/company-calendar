@@ -2,22 +2,36 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>金牛頓公司活動行事曆</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
-        h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
-        #calendarContainer { margin-top: 30px; border: 1px solid #0d47a1; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; background: white; }
-        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
-        #calendar td { height: 110px; vertical-align: top; width: 14.28%; }
-        .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; border-left: 4px solid #999; background: #eee; }
-        .activity-record { background-color: #673ab7 !important; color: white !important; }
-        .holiday-record { background-color: #e91e63 !important; color: white !important; }
+        h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 10px; margin-top: 5px; text-align: center; }
+        
+        /* 統一表格與對齊 */
+        table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; table-layout: fixed; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; vertical-align: middle; }
+        th { background-color: #e3f2fd; color: #0d47a1; font-weight: bold; }
+        
+        #calendar td { height: 150px; vertical-align: top; }
+        .date-number { display: block; font-weight: bold; margin-bottom: 5px; text-align: center; }
+        
+        .leave-record { 
+            padding: 4px 6px; margin: 2px auto; border-radius: 3px; font-size: 0.85em; 
+            text-align: left; border-left: 5px solid #999; background: #eee; width: 90%;
+        }
+        
+        /* 金牛頓特殊底色 (直接定義在 CSS 以便重複使用) */
+        .type-activity { background-color: #0d47a1 !important; color: #ffffff !important; border-left: 5px solid #002171 !important; }
+        .type-business { background-color: #bbdefb !important; color: #0d47a1 !important; border-left: 5px solid #1976d2 !important; }
+
+        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0; }
+        button { cursor: pointer; padding: 8px 15px; }
     </style>
 </head>
 <body>
 
-    <h2>📊 金牛頓行事曆 (雲端同步版)</h2>
+    <h2>📊 金牛頓公司行事曆</h2>
 
     <div id="calendarContainer">
         <div id="calendarHeader">
@@ -32,28 +46,22 @@
     </div>
 
     <script>
-        // 您的 Google Sheet CSV 網址
+        // 設定 CSV 連結
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
-        
         let leaveRecords = [];
         let currentDisplayDate = new Date();
 
-        // 核心：從網路撈取資料，取代 localStorage
-        async function fetchGoogleData() {
+        async function fetchData() {
             try {
-                const response = await fetch(CSV_URL);
-                const text = await response.text();
-                // 假設 CSV 格式為：姓名,事別,開始日期,結束日期,時數類型,說明
-                const rows = text.split('\n').slice(1); 
-                leaveRecords = rows.filter(r => r.trim()).map(r => {
+                const res = await fetch(CSV_URL);
+                const text = await res.text();
+                // 解析 CSV: 姓名(0), 事別(1), 開始(2), 結束(3), 時數(4), 說明(5)
+                leaveRecords = text.split('\n').slice(1).filter(r => r.trim()).map(r => {
                     const c = r.split(',');
-                    return { name: c[0], type: c[1], start: c[2], end: c[3], displayDuration: c[4], note: c[5] };
+                    return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), note: c[5]?.trim() };
                 });
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-            } catch (err) {
-                console.error("無法讀取 Google 資料", err);
-                alert("無法讀取行事曆資料，請檢查網路連線或 CSV 網址是否正確。");
-            }
+            } catch (e) { console.error("資料讀取失敗", e); }
         }
 
         function renderCalendar(year, month) {
@@ -61,41 +69,39 @@
             const tbody = document.querySelector('#calendar tbody');
             tbody.innerHTML = '';
             
-            const firstDay = new Date(year, month - 1, 1).getDay();
-            const lastDate = new Date(year, month, 0).getDate();
-            let date = 1;
+            let firstDay = new Date(year, month - 1, 1).getDay();
+            let lastDate = new Date(year, month, 0).getDate();
+            let row = document.createElement('tr');
             
-            for (let i = 0; i < 6; i++) {
-                let row = document.createElement('tr');
-                for (let j = 0; j < 7; j++) {
-                    let cell = document.createElement('td');
-                    if ((i === 0 && j < firstDay) || date > lastDate) {
-                        cell.style.background = "#f9f9f9";
-                    } else {
-                        const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
-                        cell.innerHTML = `<div style="font-weight:bold;text-align:right;">${date}</div>`;
-                        
-                        // 篩選出該日期的紀錄
-                        leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                            let tc = r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record');
-                            cell.innerHTML += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
-                        });
-                        date++;
-                    }
-                    row.appendChild(cell);
-                }
-                tbody.appendChild(row);
-                if (date > lastDate) break;
+            // 前置空白格
+            for(let i=0; i<firstDay; i++) row.appendChild(document.createElement('td'));
+            
+            for(let d=1; d<=lastDate; d++) {
+                if((firstDay + d - 1) % 7 === 0 && d > 1) { tbody.appendChild(row); row = document.createElement('tr'); }
+                
+                let cell = document.createElement('td');
+                const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                cell.innerHTML = `<span class="date-number">${d}</span>`;
+                
+                // 篩選並渲染該日活動
+                leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
+                    let cls = 'leave-record';
+                    if (r.type && r.type.includes('金牛頓')) cls += ' type-activity';
+                    else if (r.type === '出差') cls += ' type-business';
+                    
+                    cell.innerHTML += `<div class="${cls}">${r.name}<br>${r.note}</div>`;
+                });
+                row.appendChild(cell);
             }
+            tbody.appendChild(row);
         }
 
-        function changeMonth(d) {
-            currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d);
-            renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
+        function changeMonth(d) { 
+            currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); 
+            renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); 
         }
 
-        // 頁面載入時執行
-        fetchGoogleData();
+        fetchData();
     </script>
 </body>
 </html>
