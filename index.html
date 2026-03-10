@@ -22,6 +22,12 @@
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
+        /* 隱藏週末樣式 */
+        #calendarContainer.hide-weekend #calendar th:nth-child(1),
+        #calendarContainer.hide-weekend #calendar td:nth-child(1),
+        #calendarContainer.hide-weekend #calendar th:nth-child(7),
+        #calendarContainer.hide-weekend #calendar td:nth-child(7) { display: none !important; }
+
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
         .golden-record { background-color: #0d47a1 !important; color: white !important; }
@@ -36,11 +42,12 @@
 
     <h2>📊 金牛頓公司活動行事曆</h2>
 
-    <div id="calendarContainer">
+    <div id="calendarContainer" class="hide-weekend">
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
             <span id="currentYearMonth">2026年 3月</span>
             <div>
+                <button onclick="toggleWeekend()">隱藏/顯示週末</button>
                 <button onclick="changeMonth(1)">下個月 ▶</button>
             </div>
         </div>
@@ -109,6 +116,8 @@
                 renderSuggestions();
             } catch (e) { console.error("資料讀取失敗", e); }
         }
+
+        function toggleWeekend() { document.getElementById('calendarContainer').classList.toggle('hide-weekend'); }
 
         function queryRecords() {
             const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
