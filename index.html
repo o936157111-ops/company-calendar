@@ -6,39 +6,25 @@
     <title>金牛頓公司行事曆</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 15px; background-color: #f8f9fa; margin: 0; }
-        
-        /* 標題 */
         h2 { color: #0d47a1; margin: 15px 0; font-size: 1.8em; text-align: center; }
         
-        #calendarContainer { border: 2px solid #00008B; background: white; border-radius: 8px; overflow: hidden; max-width: 1200px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #calendarContainer { border: 2px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1200px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        /* 【關鍵修正】強制深藍底色、白色字體，並給予最高權重 */
-        #calendarHeader { 
-            background-color: #00008B !important; 
-            color: #FFFFFF !important; 
-            padding: 15px; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
+        /* 標題欄位：強制深藍底、白色字 */
+        #calendarHeader { background-color: #00008B !important; color: #FFFFFF !important; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* 按鈕：在深藍背景上要顯眼，設為白色底、深藍字 */
-        #calendarHeader button { 
-            background-color: #FFFFFF !important; 
-            color: #00008B !important; 
-            border: none; 
-            padding: 6px 12px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            border-radius: 4px;
-        }
-
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        th { background-color: #e3f2fd; padding: 12px; text-align: center; color: #1565c0; }
-        td { border: 1px solid #dee2e6; height: 120px; vertical-align: top; padding: 8px; }
+        th { background-color: #e3f2fd; padding: 12px; text-align: center; font-size: 1.1em; color: #1565c0; }
+        td { border: 1px solid #dee2e6; height: 130px; vertical-align: top; padding: 8px; }
         
-        /* 紀錄條 */
-        .leave-record { padding: 3px 6px; margin-top: 3px; font-size: 0.85em; text-align: left; border-radius: 3px; }
+        /* 日期數字放大 */
+        td strong { font-size: 1.2em; display: block; margin-bottom: 5px; }
+        
+        /* 紀錄條：放大文字與行距 */
+        .leave-record { padding: 4px 8px; margin-top: 4px; font-size: 1.05em; line-height: 1.4; border-radius: 4px; cursor: pointer; }
+        
+        .type-business { background-color: #bbdefb !important; color: #0d47a1 !important; border-left: 4px solid #1976d2 !important; } 
+        .type-default { background-color: #eeeeee !important; color: #333 !important; border-left: 4px solid #999 !important; } 
     </style>
 </head>
 <body>
@@ -47,9 +33,9 @@
     
     <div id="calendarContainer">
         <div id="calendarHeader">
-            <button onclick="changeMonth(-1)">◀ 上個月</button>
-            <span id="currentYearMonth" style="font-weight:bold; font-size: 1.2em; color: #FFFFFF;"></span>
-            <button onclick="changeMonth(1)">下個月 ▶</button>
+            <button onclick="changeMonth(-1)" style="padding: 6px 15px; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; background: white; color: #00008B;">◀ 上個月</button>
+            <span id="currentYearMonth" style="font-weight:bold; font-size: 1.3em;"></span>
+            <button onclick="changeMonth(1)" style="padding: 6px 15px; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; background: white; color: #00008B;">下個月 ▶</button>
         </div>
         <table id="calendar">
             <thead>
@@ -60,7 +46,6 @@
     </div>
 
     <script>
-        // 為了排除任何舊快取干擾，我們在 fetchData 加上時間戳記強制更新
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv&t=' + new Date().getTime();
         let leaveRecords = [];
         let currentDisplayDate = new Date();
@@ -92,7 +77,22 @@
             for(let d=1; d<=lastDate; d++) {
                 if((firstDay + d - 1) % 7 === 0) { tbody.appendChild(row); row = document.createElement('tr'); }
                 let cell = document.createElement('td');
+                const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                
+                const hasGoldNewton = leaveRecords.some(r => ds >= r.start && ds <= r.end && r.type?.includes('金牛頓'));
+                if(hasGoldNewton) {
+                    cell.style.backgroundColor = "#00008B"; // 深藍色
+                    cell.style.color = "white";
+                }
+
                 cell.innerHTML = `<strong>${d}</strong>`;
+                
+                leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
+                    let colorClass = 'type-default';
+                    if (r.type && r.type.includes('出差')) { colorClass = 'type-business'; }
+                    const displayText = r.note ? `${r.name}:${r.note}` : r.name;
+                    cell.innerHTML += `<div class="leave-record ${colorClass}" style="${hasGoldNewton ? 'color:white' : ''}">${displayText}</div>`;
+                });
                 row.appendChild(cell);
             }
             tbody.appendChild(row);
