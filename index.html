@@ -2,42 +2,108 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>金牛頓公司行事曆</title>
     <style>
-        /* 1. 表頭深藍底色 */
-        #calendarHeader { background-color: #00008b !important; color: white !important; padding: 15px; }
-
-        /* 2. 【關鍵】金牛頓活動格位底色：使用深藍色 */
-        .type-activity { 
-            background-color: #00008b !important; /* 深藍色 */
-            color: #ffffff !important; 
-            border-left: 4px solid #000033 !important; 
-        }
-
-        /* 其他原有樣式維持不變 */
-        #calendar { width: 100%; border-collapse: collapse; }
-        td { height: 120px; border: 1px solid #ccc; vertical-align: top; padding: 5px; }
-        .leave-record { padding: 3px; margin: 2px; font-size: 0.85em; }
+        body { font-family: 'Segoe UI', sans-serif; padding: 15px; background-color: #f8f9fa; margin: 0; }
+        h2 { color: #0d47a1; margin: 15px 0; font-size: 1.8em; text-align: center; }
+        
+        #calendarContainer { border: 2px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1200px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        
+        /* 表頭深藍底色 */
+        #calendarHeader { background-color: #0d47a1 !important; color: white !important; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { background-color: #e3f2fd; padding: 12px; text-align: center; font-size: 1em; color: #1565c0; }
+        td { border: 1px solid #dee2e6; height: 120px; vertical-align: top; padding: 8px; font-size: 0.9em; }
+        
+        /* 紀錄條樣式 */
+        .leave-record { padding: 3px 6px; margin-top: 3px; font-size: 0.85em; text-align: left; border-radius: 3px; margin-bottom: 2px; }
+        .type-business { background-color: #bbdefb !important; color: #0d47a1 !important; border-left: 4px solid #1976d2 !important; } 
+        .type-default { background-color: #eeeeee !important; color: #333 !important; border-left: 4px solid #999 !important; } 
     </style>
 </head>
 <body>
-    <div id="calendarHeader">金牛頓公司行事曆</div>
-    <table id="calendar">
-        <tbody></tbody>
-    </table>
+
+    <h2>金牛頓公司行事曆</h2>
+    
+    <div id="calendarContainer">
+        <div id="calendarHeader">
+            <button onclick="changeMonth(-1)" style="padding: 5px 15px; cursor: pointer;">◀ 上個月</button>
+            <span id="currentYearMonth" style="font-weight:bold; font-size: 1.2em;"></span>
+            <button onclick="changeMonth(1)" style="padding: 5px 15px; cursor: pointer;">下個月 ▶</button>
+        </div>
+        <table id="calendar">
+            <thead>
+                <tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
 
     <script>
-        // 維持原邏輯，確保 r.type.includes('金牛頓') 時，能正確套用 .type-activity
-        function renderCalendar(year, month) {
-            // ... (省略部分代碼，邏輯與您原本一致)
-            leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                let colorClass = 'type-default';
-                if (r.type && r.type.includes('金牛頓')) {
-                    colorClass = 'type-activity'; // 這裡會套用上面的深藍色 CSS
-                }
-                // ...
-            });
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
+        let leaveRecords = [];
+        let currentDisplayDate = new Date();
+
+        async function fetchData() {
+            try {
+                const response = await fetch(CSV_URL);
+                const text = await response.text();
+                const rows = text.split('\n').slice(1);
+                leaveRecords = rows.filter(row => row.trim() !== "").map(row => {
+                    const [name, type, start, end, dur, note] = row.split(',');
+                    return { name: name?.trim(), type: type?.trim(), start: start?.trim(), end: end?.trim(), note: note?.trim() };
+                });
+                renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
+            } catch (e) { console.error("資料讀取失敗", e); }
         }
+
+        function renderCalendar(year, month) {
+            document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
+            const tbody = document.querySelector('#calendar tbody');
+            tbody.innerHTML = '';
+            
+            let firstDay = new Date(year, month - 1, 1).getDay();
+            let lastDate = new Date(year, month, 0).getDate();
+            let row = document.createElement('tr');
+            
+            for(let i=0; i<firstDay; i++) row.appendChild(document.createElement('td'));
+            
+            for(let d=1; d<=lastDate; d++) {
+                if((firstDay + d - 1) % 7 === 0) { tbody.appendChild(row); row = document.createElement('tr'); }
+                let cell = document.createElement('td');
+                const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                
+                // 檢查該日期是否有金牛頓活動
+                const hasGoldNewton = leaveRecords.some(r => ds >= r.start && ds <= r.end && r.type?.includes('金牛頓'));
+                if(hasGoldNewton) {
+                    cell.style.backgroundColor = "#00008B"; // 深藍色
+                    cell.style.color = "white";
+                }
+
+                cell.innerHTML = `<strong>${d}</strong>`;
+                
+                leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
+                    let colorClass = 'type-default';
+                    if (r.type && r.type.includes('出差')) { colorClass = 'type-business'; }
+                    
+                    const displayText = r.note ? `${r.name}:${r.note}` : r.name;
+                    // 如果有金牛頓，文字顏色也強制轉白以便閱讀
+                    const textColor = hasGoldNewton ? 'style="color:white"' : '';
+                    cell.innerHTML += `<div class="leave-record ${colorClass}" ${textColor} title="${displayText}">${displayText}</div>`;
+                });
+                row.appendChild(cell);
+            }
+            tbody.appendChild(row);
+        }
+
+        function changeMonth(d) { 
+            currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); 
+            renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); 
+        }
+
+        fetchData();
     </script>
 </body>
 </html>
