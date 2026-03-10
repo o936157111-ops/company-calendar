@@ -22,26 +22,33 @@
         .other-month { background-color: #f9f9f9; }
         .hide-weekend .col-6, .hide-weekend .col-0 { display: none; }
         
-        /* 統一標題底色：確保深藍色在所有月份一致 */
-        #calendarHeader { background-color: #0d47a1 !important; color: white; padding: 15px; font-size: 1.2em; font-weight: bold; display: flex; align-items: center; justify-content: space-between; border-radius: 8px 8px 0 0; }
-        #currentYearMonth { flex: 1; text-align: center; }
+        /* 【關鍵修正】強制鎖定標題列底色為深藍色 */
+        #calendarHeader { 
+            background-color: #0d47a1 !important; 
+            background: #0d47a1 !important; 
+            color: white !important; 
+            padding: 15px; 
+            font-size: 1.2em; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            border-radius: 8px 8px 0 0; 
+        }
+        #currentYearMonth { flex: 1; text-align: center; color: white !important; }
         .btn-group { display: flex; gap: 10px; }
         
-        /* 查詢按鈕樣式 */
         button { background: white; color: #0d47a1; border: 1px solid #ccc; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: 0.3s; }
         button:hover { background-color: #e3f2fd; }
         .query-btn { background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; border: none; padding: 10px 25px; border-radius: 6px; }
         .query-btn:hover { background: #1565c0; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
 
-        /* 查詢區塊樣式優化 */
         #querySection { background: white; padding: 25px; border: 1px solid #dee2e6; margin-top: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
         .control-group { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
         #nameSelect, #startDate, #endDate { padding: 10px; border: 1px solid #ccc; border-radius: 6px; min-width: 160px; height: 42px; }
         
-        /* 統計摘要區塊樣式 */
         #summaryArea { margin-bottom: 15px; padding: 15px 20px; background: #e3f2fd; border-left: 6px solid #0d47a1; border-radius: 4px; font-weight: bold; color: #0d47a1; display: none; font-size: 1.1em; }
         
-        /* 查詢結果表格美化 */
         #resultTable { width: 100%; border-collapse: collapse; margin-top: 15px; border-radius: 8px; overflow: hidden; }
         #resultTable th { background-color: #f1f3f5; color: #495057; height: 45px; border-bottom: 2px solid #dee2e6; }
         #resultTable td { height: auto; padding: 12px; border: 1px solid #dee2e6; text-align: center; }
@@ -112,11 +119,9 @@
                     const c = r.split(',');
                     return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), duration: c[4]?.trim(), note: c[5]?.trim() };
                 });
-                
                 const names = [...new Set(leaveRecords.map(r => r.name))];
                 const select = document.getElementById('nameSelect');
                 names.forEach(n => { if(n) { let o = document.createElement('option'); o.value = n; o.textContent = n; select.appendChild(o); } });
-                
                 renderCalendar();
             } catch (err) { console.error("資料讀取失敗", err); }
         }
@@ -128,49 +133,33 @@
             const tbody = document.getElementById('resultBody');
             const summaryArea = document.getElementById('summaryArea');
             const summaryText = document.getElementById('summaryText');
-            
             tbody.innerHTML = '';
-            const filtered = leaveRecords.filter(r => 
-                (name === 'ALL' || r.name === name) &&
-                (start === '' || r.start >= start) &&
-                (end === '' || r.end <= end)
-            );
-
+            const filtered = leaveRecords.filter(r => (name === 'ALL' || r.name === name) && (start === '' || r.start >= start) && (end === '' || r.end <= end));
             const stats = {};
             filtered.forEach(r => {
                 let val = 0;
                 let displayDays = "";
-                
-                // 優先識別時數欄位中的「小時」或「全天/半天」
                 if (r.duration && r.duration.includes('小時')) {
                     val = (parseFloat(r.duration) || 0) / 8;
                     displayDays = val.toFixed(2) + " 天";
                 } else if (r.duration && (r.duration.includes('全天') || r.duration === '1')) {
-                    val = 1.0;
-                    displayDays = "1.00 天";
+                    val = 1.0; displayDays = "1.00 天";
                 } else if (r.duration && (r.duration.includes('半天') || r.duration === '0.5')) {
-                    val = 0.5;
-                    displayDays = "0.50 天";
+                    val = 0.5; displayDays = "0.50 天";
                 } else {
-                    // 若無特定時數，自動計算日期差 (含當天)
                     const d1 = new Date(r.start);
                     const d2 = new Date(r.end);
                     val = Math.max(1, (d2 - d1) / (1000 * 60 * 60 * 24) + 1);
                     displayDays = val.toFixed(1) + " 天";
                 }
-
                 stats[r.type] = (stats[r.type] || 0) + val;
                 tbody.innerHTML += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${displayDays}</td><td>${r.note}</td></tr>`;
             });
-
-            // 更新統計摘要文字
             const summaryArr = Object.entries(stats).map(([type, total]) => `${type}: ${total.toFixed(2)} 天`);
             if (summaryArr.length > 0) {
                 summaryText.textContent = summaryArr.join(' | ');
                 summaryArea.style.display = 'block';
-            } else {
-                summaryArea.style.display = 'none';
-            }
+            } else { summaryArea.style.display = 'none'; }
         }
 
         function toggleWeekend() { document.getElementById('calendar').classList.toggle('hide-weekend'); }
@@ -179,13 +168,16 @@
             const year = currentDisplayDate.getFullYear();
             const month = currentDisplayDate.getMonth() + 1;
             document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
+            
+            // 確保每次渲染時標題列顏色正確
+            document.getElementById('calendarHeader').style.backgroundColor = '#0d47a1';
+
             const tbody = document.querySelector('#calendar tbody');
             tbody.innerHTML = '';
             const firstDay = new Date(year, month - 1, 1).getDay();
             const lastDate = new Date(year, month, 0).getDate();
             let date = 1;
             const todayStr = new Date().toISOString().slice(0,10);
-
             for (let i = 0; i < 6; i++) {
                 let row = document.createElement('tr');
                 for (let j = 0; j < 7; j++) {
