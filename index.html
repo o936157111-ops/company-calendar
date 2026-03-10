@@ -19,19 +19,20 @@
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 0.6em; }
         
-        #calendar td { height: 120px; vertical-align: top; width: 14.28%; padding: 0; }
+        #calendar td { height: 130px; vertical-align: top; width: 14.28%; padding: 0; }
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
         
-        .date-number { font-weight: bold; text-align: center; padding: 3px; background: rgba(0,0,0,0.02); border-bottom: 1px solid #eee; }
-        .holiday-name { font-size: 0.75em; color: #d32f2f; font-weight: bold; padding: 2px; }
+        .date-number { font-weight: bold; text-align: center; padding: 5px; background: rgba(0,0,0,0.03); border-bottom: 1px solid #ddd; font-size: 1.1em; }
+        .holiday-name { font-size: 0.85em; color: #d32f2f; font-weight: bold; padding: 2px; }
         
         #calendarContainer.hide-weekend #calendar th:nth-child(1),
         #calendarContainer.hide-weekend #calendar td:nth-child(1),
         #calendarContainer.hide-weekend #calendar th:nth-child(7),
         #calendarContainer.hide-weekend #calendar td:nth-child(7) { display: none !important; }
 
-        .leave-record { padding: 2px 4px; margin: 1px; border-radius: 3px; font-size: 0.75em; text-align: left; border-left: 3px solid #999; background: #eee; word-break: break-all; }
+        /* 活動紀錄文字恢復大小 */
+        .leave-record { padding: 3px 6px; margin: 2px; border-radius: 3px; font-size: 0.9em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
         .golden-record { background-color: #0d47a1 !important; color: white !important; }
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
@@ -43,8 +44,6 @@
         @media screen and (max-width: 768px) {
             #calendarContainer { overflow-x: auto; }
             #calendar { min-width: 600px; }
-            .action-section div { flex-direction: column; align-items: stretch !important; gap: 5px !important; }
-            .action-section button, .action-section select, .action-section input { width: 100%; }
         }
     </style>
 </head>
@@ -87,7 +86,6 @@
     <div id="queryResultArea"></div>
 
     <script>
-        // 修正：將假日改為物件格式 { date: 'YYYY-MM-DD', name: '名稱' }
         const NATIONAL_HOLIDAYS = [
             {date: "2026-01-01", name: "元旦"}, {date: "2026-01-21", name: "除夕"}, {date: "2026-01-22", name: "春節"}, {date: "2026-01-23", name: "春節"}, 
             {date: "2026-01-24", name: "春節"}, {date: "2026-01-25", name: "春節"}, {date: "2026-01-26", name: "春節"}, {date: "2026-01-27", name: "春節"}, 
@@ -146,8 +144,8 @@
 
         function renderSuggestions() { document.getElementById('suggestionList').innerHTML = suggestions.map(s => `<tr><td style="font-weight:bold;">${s.title}</td><td style="text-align:left; white-space:pre-wrap;">${s.content}</td></tr>`).join(''); }
         function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); }
-        function queryRecords() { const qName=document.getElementById('queryNameSelect').value, s=document.getElementById('queryStartDate').value, e=document.getElementById('queryEndDate').value; if(!s||!e) return alert("請選日期"); let res=leaveRecords.filter(r=>((r.start>=s&&r.start<=e)||(r.end>=s&&r.end<=e))&&(qName==="全部人員"||r.name===qName)); res.sort((a,b)=>a.start<b.start?-1:1); let stats={}, h=`<table><thead><tr><th>姓名</th><th>事別</th><th>開始</th><th>結束</th><th>時數/天數</th><th>說明</th></tr></thead><tbody>`; res.forEach(r=>{ stats[r.type]=(stats[r.type]||0)+r.calcValue; h+=`<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red;font-weight:bold;">${r.displayDuration}</td><td style="text-align:left;">${r.note}</td></tr>` }); if(res.length>0) h+=`<tr style="background:#fff9c4;font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${Object.keys(stats).map(k=>`${k}:${stats[k].toFixed(2)}天`).join(' | ')}</td></tr>`; document.getElementById('queryResultArea').innerHTML=h+'</tbody></table>'; }
-        function exportToExcel() { const qName=document.getElementById('queryNameSelect').value, s=document.getElementById('queryStartDate').value, e=document.getElementById('queryEndDate').value; if(!s||!e) return alert("先查詢"); let res=leaveRecords.filter(r=>((r.start>=s&&r.start<=e)||(r.end>=s&&r.end<=e))&&(qName==="全部人員"||r.name===qName)); if(res.length==0) return alert("無資料"); let csv="\ufeff姓名,事別,開始,結束,時數/天數,說明\n"; res.forEach(r=>{csv+=`${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note.replace(/,/g,"，")}\n`}); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download="查詢結果.csv"; link.click(); }
+        function queryRecords() { const qN=document.getElementById('queryNameSelect').value, s=document.getElementById('queryStartDate').value, e=document.getElementById('queryEndDate').value; if(!s||!e) return alert("請選日期"); let res=leaveRecords.filter(r=>((r.start>=s&&r.start<=e)||(r.end>=s&&r.end<=e))&&(qN==="全部人員"||r.name===qN)); res.sort((a,b)=>a.start<b.start?-1:1); let stats={}, h=`<table><thead><tr><th>姓名</th><th>事別</th><th>開始</th><th>結束</th><th>時數/天數</th><th>說明</th></tr></thead><tbody>`; res.forEach(r=>{ stats[r.type]=(stats[r.type]||0)+r.calcValue; h+=`<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red;font-weight:bold;">${r.displayDuration}</td><td style="text-align:left;">${r.note}</td></tr>` }); if(res.length>0) h+=`<tr style="background:#fff9c4;font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${Object.keys(stats).map(k=>`${k}:${stats[k].toFixed(2)}天`).join(' | ')}</td></tr>`; document.getElementById('queryResultArea').innerHTML=h+'</tbody></table>'; }
+        function exportToExcel() { const qN=document.getElementById('queryNameSelect').value, s=document.getElementById('queryStartDate').value, e=document.getElementById('queryEndDate').value; if(!s||!e) return alert("先查詢"); let res=leaveRecords.filter(r=>((r.start>=s&&r.start<=e)||(r.end>=s&&r.end<=e))&&(qN==="全部人員"||r.name===qN)); if(res.length==0) return alert("無資料"); let csv="\ufeff姓名,事別,開始,結束,時數/天數,說明\n"; res.forEach(r=>{csv+=`${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note.replace(/,/g,"，")}\n`}); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download="查詢結果.csv"; link.click(); }
         function saveFullHTML() { const q=document.getElementById('queryResultArea'), o=q.innerHTML; q.innerHTML=""; const b=new Blob(['<!DOCTYPE html>\n'+document.documentElement.outerHTML],{type:'text/html'}); const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=`金牛頓_${new Date().toISOString().split('T')[0]}.html`; a.click(); q.innerHTML=o; }
         document.addEventListener('DOMContentLoaded', () => { nameList.forEach(n => document.getElementById('queryNameSelect').add(new Option(n, n))); fetchData(); });
     </script>
