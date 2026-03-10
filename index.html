@@ -33,6 +33,8 @@
 
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
+        /* 新增：金牛頓深藍色底色 */
+        .golden-activity-record { background-color: #0d47a1 !important; color: white !important; }
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
 
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
@@ -133,14 +135,13 @@
         let leaveRecords = [];
         let suggestions = JSON.parse(localStorage.getItem(SUGGEST_KEY)) || [];
 
-        // 從 Google Sheets 讀取並解析 CSV
         async function fetchGoogleData() {
             try {
                 const response = await fetch(GOOGLE_CSV_URL);
                 const data = await response.text();
-                const rows = data.split('\n').slice(1); // 假設第一行是標題，跳過
+                const rows = data.split('\n').slice(1);
                 leaveRecords = rows.filter(row => row.trim() !== '').map((row, index) => {
-                    const cols = row.split(','); // 簡易解析，若內容包含逗號需更複雜處理
+                    const cols = row.split(',');
                     return {
                         id: Date.now() + index,
                         name: cols[0],
@@ -149,7 +150,7 @@
                         end: cols[3],
                         displayDuration: cols[4],
                         note: cols[5] || '',
-                        calcValue: 1 // 預設值
+                        calcValue: 1
                     };
                 });
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
@@ -293,7 +294,8 @@
                         const isToday = (ds === todayStr);
                         row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}"><div style="font-weight:bold;text-align:right;">${date}</div>`;
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                            let tc = r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record');
+                            // 修改：判斷若為金牛頓活動則套用深藍色 class
+                            let tc = (r.name === '金牛頓' && r.type === '活動') ? 'golden-activity-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
                             let durLabel = (r.displayDuration && r.displayDuration !== '整天') ? `(${r.displayDuration})` : '';
                             row += `<div class="leave-record ${tc}">${r.name}-${r.note}${durLabel}</div>`;
                         });
@@ -369,7 +371,7 @@
             qSel.add(new Option("全部人員", "全部人員")); 
             nameList.slice(1).forEach(n => qSel.add(new Option(n, n)));
             toggleLeaveTypeOptions(); 
-            fetchGoogleData(); // 初始載入 Google 資料
+            fetchGoogleData(); 
             renderSuggestions();
         });
     </script>
