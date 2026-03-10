@@ -10,8 +10,6 @@
         select, input[type="date"], input[type="text"], input[type="number"], textarea {
             height: 40px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; vertical-align: middle;
         }
-        textarea { height: 80px; }
-
         table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; }
         th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
         th { background-color: #e3f2fd; color: #0d47a1; }
@@ -24,11 +22,6 @@
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
-        #calendarContainer.hide-weekend #calendar th:nth-child(1),
-        #calendarContainer.hide-weekend #calendar td:nth-child(1),
-        #calendarContainer.hide-weekend #calendar th:nth-child(7),
-        #calendarContainer.hide-weekend #calendar td:nth-child(7) { display: none !important; }
-
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
         .golden-record { background-color: #0d47a1 !important; color: white !important; }
@@ -36,19 +29,18 @@
 
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
-        @media print { .no-print, .action-section, #calendarHeader button, .del-btn { display: none !important; } }
+        @media print { .no-print, .action-section, #calendarHeader button { display: none !important; } }
     </style>
 </head>
 <body>
 
     <h2>📊 金牛頓公司活動行事曆</h2>
 
-    <div id="calendarContainer" class="hide-weekend">
+    <div id="calendarContainer">
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
             <span id="currentYearMonth">2026年 3月</span>
             <div>
-                <button onclick="toggleWeekend()">隱藏/顯示週末</button>
                 <button onclick="changeMonth(1)">下個月 ▶</button>
             </div>
         </div>
@@ -64,15 +56,12 @@
     </div>
 
     <div class="action-section">
-        <h3 style="margin-top:0;">🔍 紀錄查詢、備份與匯出</h3>
+        <h3 style="margin-top:0;">🔍 紀錄查詢、備份與列印</h3>
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
             <select id="queryNameSelect" style="min-width:150px; height:40px;"></select>
             <input type="date" id="queryStartDate"> 至 <input type="date" id="queryEndDate">
             <button onclick="queryRecords()" style="height:40px; background:#007bff; color:white; border:none; padding:0 20px; border-radius:4px; cursor:pointer;">查詢</button>
             <button onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
-            <button onclick="exportBackupJSON()" style="height:40px; background:#5d4037; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📤 匯出</button>
-            <input type="file" id="importFile" style="display:none" onchange="importBackupJSON(this)">
-            <button onclick="document.getElementById('importFile').click()" style="height:40px; background:#00796b; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📥 匯入</button>
             <button onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">💾 儲存</button>
             <button onclick="window.print()" style="height:40px; background:#607d8b; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🖨️ 列印</button>
         </div>
@@ -82,11 +71,9 @@
 
     <script>
         let currentDisplayDate = new Date();
-        const STORAGE_KEY = 'leaveCalendarRecords';
         const SUGGEST_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=1793548004&single=true&output=csv';
         const GOOGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
-        const nameList = ["請選擇人員", "金牛頓", "ERIC", "JAMES", "方順黌", "王冠峯", "余品橋", "李佩娟", "高欣宜", "陳秀燕", "陳品鈞", "陳靖昂", "陳慧真", "曾晨杰", "楊添仰", "詹淑敏", "戴政宏", "蘇威丞"];
-        const ADMIN_PASSWORD = "AB)&@)cd0526";
+        const nameList = ["全部人員", "金牛頓", "ERIC", "JAMES", "方順黌", "王冠峯", "余品橋", "李佩娟", "高欣宜", "陳秀燕", "陳品鈞", "陳靖昂", "陳慧真", "曾晨杰", "楊添仰", "詹淑敏", "戴政宏", "蘇威丞"];
 
         let leaveRecords = [];
         let suggestions = [];
@@ -122,8 +109,6 @@
                 renderSuggestions();
             } catch (e) { console.error("資料讀取失敗", e); }
         }
-
-        function toggleWeekend() { document.getElementById('calendarContainer').classList.toggle('hide-weekend'); }
 
         function queryRecords() {
             const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
@@ -193,17 +178,6 @@
             }).join('');
         }
 
-        function exportBackupJSON() { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({records: leaveRecords})], {type: 'application/json'})); a.download = "金牛頓備份.json"; a.click(); }
-        function importBackupJSON(input) {
-            if(!input.files[0]) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const data = JSON.parse(e.target.result);
-                localStorage.setItem(STORAGE_KEY, JSON.stringify(data.records || []));
-                location.reload(); 
-            };
-            reader.readAsText(input.files[0]);
-        }
         function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); }
         
         function saveFullHTML() {
@@ -220,8 +194,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const qSel = document.getElementById('queryNameSelect');
-            qSel.add(new Option("全部人員", "全部人員")); 
-            nameList.slice(1).forEach(n => qSel.add(new Option(n, n)));
+            nameList.forEach(n => qSel.add(new Option(n, n)));
             fetchData(); 
         });
     </script>
