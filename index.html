@@ -22,11 +22,15 @@
         .holiday-label { font-size: 0.75em; color: #d84315; font-weight: bold; margin-top: 2px; }
         
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        .controls { margin-bottom: 10px; text-align: right; }
     </style>
 </head>
 <body>
 
     <h2>📊 金牛頓公司行事曆</h2>
+    <div class="controls">
+        <button onclick="toggleWeekend()">切換顯示/隱藏週末</button>
+    </div>
 
     <div id="calendarContainer">
         <div id="calendarHeader">
@@ -35,7 +39,7 @@
             <button onclick="changeMonth(1)">下個月 ▶</button>
         </div>
         <table id="calendar">
-            <thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead>
+            <thead id="calendarHead"></thead>
             <tbody></tbody>
         </table>
     </div>
@@ -43,17 +47,14 @@
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
         
-        // 115年假期定義：陣列表示有底色，物件對應表表示名稱
-        const publicHolidaysList = ["2026-01-01", "2026-02-14", "2026-02-15", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-27", "2026-02-28", "2026-03-01", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-05-01", "2026-05-02", "2026-05-03", "2026-06-19", "2026-06-20", "2026-06-21", "2026-09-25", "2026-09-26", "2026-09-27", "2026-09-28", "2026-10-09", "2026-10-10", "2026-10-11", "2026-10-24", "2026-10-25", "2026-10-26", "2026-12-25", "2026-12-26", "2026-12-27"];
-        
-        const holidayNames = {
-            "2026-01-01": "元旦", "2026-02-17": "春節", "2026-02-28": "二二八", "2026-04-04": "兒童節", 
-            "2026-04-05": "清明節", "2026-05-01": "勞動節", "2026-10-10": "國慶日"
-        };
-        
+        let showWeekend = true; // 預設顯示
         let leaveRecords = [];
         let currentDisplayDate = new Date();
 
+        // 假日清單維持不變
+        const publicHolidaysList = ["2026-01-01", "2026-02-17", "2026-02-28", "2026-04-04", "2026-04-05", "2026-05-01", "2026-10-10"];
+        const holidayNames = {"2026-01-01": "元旦", "2026-02-17": "春節", "2026-02-28": "二二八", "2026-04-04": "兒童節", "2026-04-05": "清明節", "2026-05-01": "勞動節", "2026-10-10": "國慶日"};
+        
         async function fetchGoogleData() {
             try {
                 const response = await fetch(CSV_URL);
@@ -63,41 +64,57 @@
                     const c = r.split(',');
                     return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), note: c[5]?.trim() };
                 });
-                renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
+                renderCalendar();
             } catch (err) { console.error("資料讀取失敗", err); }
         }
 
-        function renderCalendar(year, month) {
+        function toggleWeekend() {
+            showWeekend = !showWeekend;
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = currentDisplayDate.getFullYear();
+            const month = currentDisplayDate.getMonth() + 1;
             document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
+            
+            const head = document.getElementById('calendarHead');
             const tbody = document.querySelector('#calendar tbody');
             tbody.innerHTML = '';
             
-            const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+            // 設定表頭
+            head.innerHTML = showWeekend ? 
+                '<tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>' :
+                '<tr><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr>';
             
-            const firstDay = new Date(year, month - 1, 1).getDay();
+            const firstDay = new Date(year, month - 1, 1).getDay(); // 0:日, 6:六
             const lastDate = new Date(year, month, 0).getDate();
             let date = 1;
             
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+
             for (let i = 0; i < 6; i++) {
                 let row = document.createElement('tr');
-                for (let j = 0; j < 7; j++) {
+                for (let j = 0; j < (showWeekend ? 7 : 5); j++) {
                     let cell = document.createElement('td');
-                    if ((i === 0 && j < firstDay) || date > lastDate) {
+                    let currentDayOfWeek = showWeekend ? j : (j + 1); // 如果隱藏週末，從週一開始算
+                    
+                    // 判斷該格子日期
+                    let cellDate = date + (showWeekend ? (j - firstDay) : (j - (firstDay === 0 ? -1 : firstDay - 1)));
+                    
+                    if (date > lastDate || (i === 0 && (showWeekend ? j < firstDay : (j < (firstDay === 0 ? 0 : firstDay - 1))))) {
                         cell.style.background = "#f9f9f9";
                     } else {
-                        const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
+                        // 處理隱藏週末時的日期偏移
+                        let actualDate = date;
+                        const ds = `${year}-${String(month).padStart(2,'0')}-${String(actualDate).padStart(2,'0')}`;
                         
-                        // 修正：底色判斷使用 List，名稱顯示使用物件查找
                         if (ds === todayStr) cell.classList.add('today-highlight');
                         else if (publicHolidaysList.includes(ds)) cell.classList.add('public-holiday');
                         
-                        cell.innerHTML = `<div style="font-weight:bold;text-align:right;">${date}</div>`;
-                        
-                        // 顯示假日名稱 (若存在)
-                        if (holidayNames[ds]) {
-                            cell.innerHTML += `<div class="holiday-label">${holidayNames[ds]}</div>`;
-                        }
+                        cell.innerHTML = `<div style="font-weight:bold;text-align:right;">${actualDate}</div>`;
+                        if (holidayNames[ds]) cell.innerHTML += `<div class="holiday-label">${holidayNames[ds]}</div>`;
                         
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                             let tc = r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record');
@@ -114,7 +131,7 @@
 
         function changeMonth(d) {
             currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d);
-            renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
+            renderCalendar();
         }
 
         fetchGoogleData();
