@@ -15,8 +15,6 @@
         table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; }
         th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
         th { background-color: #e3f2fd; color: #0d47a1; }
-
-        #inputTable select, #inputTable input { width: 100%; }
         
         #calendarContainer { margin-top: 30px; border: 1px solid #0d47a1; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; background: white; }
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
@@ -42,38 +40,12 @@
         .suggestion-form-row { display: flex; gap: 10px; margin-bottom: 10px; }
         
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
-        @media print { .no-print, #inputTable, .action-section, .suggestion-input-box, #calendarHeader button, .del-btn { display: none !important; } }
+        @media print { .no-print, .action-section, .suggestion-input-box, #calendarHeader button, .del-btn { display: none !important; } }
     </style>
 </head>
 <body>
 
-    <h2>📊 金牛頓行事曆資料輸入</h2>
-    <table id="inputTable">
-        <thead>
-            <tr>
-                <th>人員</th> <th>事別</th> <th>開始日期</th> <th>結束日期</th>
-                <th id="durationHeader" style="display: none;">時數類型</th> <th>說明/原因</th> <th>操作</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><select id="inputNameSelect" onchange="toggleLeaveTypeOptions()"><option value="請選擇人員" disabled="">請選擇人員</option><option value="金牛頓">金牛頓</option><option value="ERIC">ERIC</option><option value="JAMES">JAMES</option><option value="方順黌">方順黌</option><option value="王冠峯">王冠峯</option><option value="余品橋">余品橋</option><option value="李佩娟">李佩娟</option><option value="高欣宜">高欣宜</option><option value="陳秀燕">陳秀燕</option><option value="陳品鈞">陳品鈞</option><option value="陳靖昂">陳靖昂</option><option value="陳慧真">陳慧真</option><option value="曾晨杰">曾晨杰</option><option value="楊添仰">楊添仰</option><option value="詹淑敏">詹淑敏</option><option value="戴政宏">戴政宏</option><option value="蘇威丞">蘇威丞</option></select></td> 
-                <td><select id="inputLeaveType" onchange="toggleInputFields()"><option value="活動">活動</option><option value="假期">假期</option></select></td>
-                <td><input type="date" id="inputStartDate"></td>
-                <td><input type="date" id="inputEndDate"></td>
-                <td id="durationCell" style="display: none;">
-                    <select id="inputDurationType" onchange="toggleDurationInput()">
-                        <option value="整天">整天</option>
-                        <option value="半天">半天</option>
-                        <option value="具體時數">具體時數</option>
-                    </select>
-                    <input type="number" id="inputHours" style="display:none; margin-top:5px;" step="0.5" placeholder="小時">
-                </td>
-                <td><input type="text" id="inputNote"></td>
-                <td><button onclick="addLeaveRecord()" style="background:#4CAF50; color:white; border:none; height:40px; cursor:pointer; border-radius:4px; width:100%; font-weight:bold;">新增</button></td>
-            </tr>
-        </tbody>
-    </table>
+    <h2>📊 金牛頓公司活動行事曆</h2>
 
     <div id="calendarContainer" class="hide-weekend">
         <div id="calendarHeader">
@@ -162,73 +134,6 @@
 
         function toggleWeekend() { document.getElementById('calendarContainer').classList.toggle('hide-weekend'); }
 
-        function toggleLeaveTypeOptions() {
-            const sel = document.getElementById('inputNameSelect').value;
-            const ts = document.getElementById('inputLeaveType');
-            ts.innerHTML = '';
-            if (sel === '金牛頓') { 
-                ["活動", "假期"].forEach(o => ts.add(new Option(o, o))); 
-            } else { 
-                ["特休", "事假", "病假", "公假", "出差", "喪假"].forEach(o => ts.add(new Option(o, o))); 
-            }
-            toggleInputFields();
-        }
-
-        function toggleInputFields() {
-            const isSpec = ['活動', '假期'].includes(document.getElementById('inputLeaveType').value);
-            document.getElementById('durationCell').style.display = isSpec ? 'none' : 'table-cell';
-            document.getElementById('durationHeader').style.display = isSpec ? 'none' : 'table-cell';
-        }
-
-        function toggleDurationInput() { 
-            document.getElementById('inputHours').style.display = document.getElementById('inputDurationType').value === '具體時數' ? 'block' : 'none'; 
-        }
-
-        function addLeaveRecord() {
-            const n = document.getElementById('inputNameSelect').value;
-            const s = document.getElementById('inputStartDate').value;
-            const e = document.getElementById('inputEndDate').value;
-            const nt = document.getElementById('inputNote').value.trim();
-            const leaveType = document.getElementById('inputLeaveType').value;
-
-            if (!s || !e || n === "請選擇人員") return alert("請完整填寫姓名與日期");
-
-            const durType = document.getElementById('inputDurationType').value;
-            const hrs = document.getElementById('inputHours').value;
-            
-            let durationText = durType;
-            let numericVal = 1;
-
-            if (leaveType === '活動' || leaveType === '假期') {
-                durationText = '整天'; 
-                numericVal = (Math.ceil(Math.abs(new Date(e) - new Date(s)) / (1000 * 60 * 60 * 24)) + 1);
-            } else {
-                if (durType === '半天') { 
-                    numericVal = 0.5; 
-                } else if (durType === '具體時數') { 
-                    durationText = hrs + "小時"; 
-                    numericVal = parseFloat(hrs) / 8; 
-                } else { 
-                    numericVal = (Math.ceil(Math.abs(new Date(e) - new Date(s)) / (1000 * 60 * 60 * 24)) + 1); 
-                }
-            }
-
-            leaveRecords.push({ 
-                id: Date.now(), 
-                name: n, 
-                type: leaveType, 
-                start: s, 
-                end: e, 
-                note: nt, 
-                displayDuration: durationText, 
-                calcValue: parseFloat(numericVal.toFixed(3)) 
-            });
-
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(leaveRecords));
-            renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-            alert("已新增");
-        }
-
         function queryRecords() {
             const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
             if (!s || !e) return alert("請選日期範圍後再執行查詢");
@@ -294,7 +199,6 @@
                         const isToday = (ds === todayStr);
                         row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}"><div style="font-weight:bold;text-align:right;">${date}</div>`;
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                            // 修正：只要人員是金牛頓，一律套用深藍色 golden-record
                             let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
                             let durLabel = (r.displayDuration && r.displayDuration !== '整天') ? `(${r.displayDuration})` : '';
                             row += `<div class="leave-record ${tc}">${r.name}-${r.note}${durLabel}</div>`;
@@ -365,12 +269,9 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const sel = document.getElementById('inputNameSelect'), qSel = document.getElementById('queryNameSelect');
-            nameList.forEach(n => sel.add(new Option(n, n))); 
-            sel.options[0].disabled = true;
+            const qSel = document.getElementById('queryNameSelect');
             qSel.add(new Option("全部人員", "全部人員")); 
             nameList.slice(1).forEach(n => qSel.add(new Option(n, n)));
-            toggleLeaveTypeOptions(); 
             fetchGoogleData(); 
             renderSuggestions();
         });
