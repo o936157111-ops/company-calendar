@@ -7,68 +7,67 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         
-        /* 1. 頂部標題：強制深藍底、白字 */
+        /* 統一標題與月份列：改為深藍色區塊 */
+        .calendar-main-header {
+            background-color: #0d47a1 !important;
+            color: white !important;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+        }
+        
         .main-title { 
-            background-color: #0d47a1 !important; 
-            color: white !important; 
-            padding: 15px 20px; 
+            padding: 15px 20px 5px 20px; 
             margin: 0; 
-            border-radius: 8px 8px 0 0; 
-            display: flex;
-            align-items: center;
+            font-size: 1.5em;
+            font-weight: bold;
         }
 
-        /* 2. 月份切換列：與標題分開，避免切換時影響背景 */
         #calendarHeader { 
-            background-color: #1565c0; 
-            color: white; 
-            padding: 10px 15px; 
+            padding: 10px 20px 15px 20px; 
             display: flex; 
             align-items: center; 
             justify-content: space-between; 
-            border-bottom: 1px solid rgba(255,255,255,0.2);
         }
         
-        #currentYearMonth { flex: 1; text-align: center; font-size: 1.2em; font-weight: bold; }
+        #currentYearMonth { flex: 1; text-align: center; font-size: 1.2em; font-weight: bold; color: white; }
         
-        /* 行事曆表格樣式 */
-        table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; table-layout: fixed; }
-        th, td { border: 1px solid #dee2e6; padding: 5px; text-align: center; height: 110px; vertical-align: top; }
-        th { background-color: #e3f2fd; color: #0d47a1; height: auto; padding: 10px 5px; }
+        /* 行事曆格位高度維持 (用於顯示紀錄) */
+        #calendar { width: 100%; border-collapse: collapse; background-color: white; table-layout: fixed; }
+        #calendar th, #calendar td { border: 1px solid #dee2e6; text-align: center; vertical-align: top; }
+        #calendar td { height: 110px; padding: 5px; }
+        #calendar th { background-color: #e3f2fd; color: #0d47a1; height: auto; padding: 10px 5px; }
         
-        .date-number { font-weight: bold; margin-bottom: 5px; }
-        .leave-record { padding: 2px 4px; margin-top: 2px; border-radius: 3px; font-size: 0.8em; text-align: left; border-left: 4px solid #777; background: #eee; color: #333 !important; word-break: break-all; }
+        /* 【關鍵修正】查詢列表樣式：高度改為自動縮放，更加精簡 */
+        #resultTable { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 8px; overflow: hidden; }
+        #resultTable th { background-color: #f1f3f5; color: #333; height: 35px; border: 1px solid #dee2e6; }
+        #resultTable td { height: auto !important; padding: 6px 10px; border: 1px solid #dee2e6; text-align: center; line-height: 1.2; }
+        #resultTable tr:hover { background-color: #f1f7ff; }
+
+        /* 紀錄樣式 */
+        .leave-record { padding: 2px 4px; margin-top: 2px; border-radius: 3px; font-size: 0.8em; text-align: left; border-left: 4px solid #777; background: #eee; color: #333 !important; }
         .activity-record { background-color: #673ab7 !important; color: #fff !important; border-left-color: #fff !important; }
         .holiday-record { background-color: #e91e63 !important; color: #fff !important; border-left-color: #fff !important; }
         
         .public-holiday { background-color: #fff3e0 !important; }
-        .holiday-label { font-size: 0.75em; color: #d84315; font-weight: bold; margin-top: 2px; }
         .today-highlight { background-color: #b71c1c !important; color: white !important; }
         .other-month { background-color: #f9f9f9; }
         .hide-weekend .col-6, .hide-weekend .col-0 { display: none; }
         
-        /* 按鈕與查詢區塊 */
-        button { background: white; color: #0d47a1; border: 1px solid #ccc; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; transition: 0.3s; }
-        button:hover { background-color: #e3f2fd; }
+        /* 查詢按鈕與控制項：修正寬度與高度 */
+        button { background: white; color: #0d47a1; border: 1px solid #ccc; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         .query-btn { background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; border: none; padding: 10px 25px; border-radius: 6px; }
 
-        #querySection { background: white; padding: 25px; border: 1px solid #dee2e6; margin-top: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .control-group { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
-        #nameSelect, #startDate, #endDate { padding: 10px; border: 1px solid #ccc; border-radius: 6px; min-width: 160px; height: 42px; }
+        #querySection { background: white; padding: 20px; border: 1px solid #dee2e6; margin-top: 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .control-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
+        #nameSelect, #startDate, #endDate { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 160px; height: 38px; box-sizing: border-box; }
         
-        #summaryArea { margin-bottom: 15px; padding: 15px 20px; background: #e3f2fd; border-left: 6px solid #0d47a1; border-radius: 4px; font-weight: bold; color: #0d47a1; display: none; }
-        
-        #resultTable { width: 100%; border-collapse: collapse; margin-top: 15px; border-radius: 8px; overflow: hidden; }
-        #resultTable th { background-color: #f1f3f5; height: 45px; border-bottom: 2px solid #dee2e6; }
-        #resultTable td { padding: 12px; border: 1px solid #dee2e6; text-align: center; }
-        #resultTable tr:hover { background-color: #f1f7ff; }
+        #summaryArea { margin-bottom: 15px; padding: 12px; background: #e3f2fd; border-left: 5px solid #0d47a1; border-radius: 4px; font-weight: bold; color: #0d47a1; display: none; }
     </style>
 </head>
 <body>
 
-    <h2 class="main-title">📊 金牛頓公司行事曆</h2>
-
-    <div id="calendarContainer">
+    <div class="calendar-main-header">
+        <div class="main-title">📊 金牛頓公司行事曆</div>
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
             <span id="currentYearMonth">載入中...</span>
@@ -77,34 +76,35 @@
                 <button onclick="changeMonth(1)">下個月 ▶</button>
             </div>
         </div>
-        <table id="calendar">
-            <thead>
-                <tr id="calendarHead">
-                    <th class="col-0">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-6">六</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
     </div>
 
+    <table id="calendar">
+        <thead>
+            <tr id="calendarHead">
+                <th class="col-0">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-6">六</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
     <div id="querySection">
-        <h3>🔍 紀錄查詢與統計</h3>
+        <h3>🔍 紀錄查詢統計</h3>
         <div class="control-group">
             <select id="nameSelect"><option value="ALL">全部人員</option></select>
             <input type="date" id="startDate"> 
             <span>至</span>
             <input type="date" id="endDate">
-            <button class="query-btn" onclick="performQuery()">開始統計查詢</button>
+            <button class="query-btn" onclick="performQuery()">執行查詢</button>
         </div>
 
         <div id="summaryArea">
-            📝 統計摘要：<span id="summaryText"></span>
+            📝 統計結果：<span id="summaryText"></span>
         </div>
 
         <table id="resultTable">
             <thead>
                 <tr>
-                    <th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>天數(折算)</th><th>說明備註</th>
+                    <th style="width:15%">姓名</th><th style="width:15%">事別</th><th style="width:15%">開始</th><th style="width:15%">結束</th><th style="width:15%">天數</th><th style="width:25%">說明</th>
                 </tr>
             </thead>
             <tbody id="resultBody"></tbody>
@@ -154,7 +154,7 @@
                 else val = Math.max(1, (new Date(r.end) - new Date(r.start)) / 86400000 + 1);
 
                 stats[r.type] = (stats[r.type] || 0) + val;
-                tbody.innerHTML += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${val.toFixed(2)} 天</td><td>${r.note}</td></tr>`;
+                tbody.innerHTML += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${val.toFixed(2)}</td><td>${r.note}</td></tr>`;
             });
 
             const summaryArr = Object.entries(stats).map(([type, total]) => `${type}: ${total.toFixed(2)} 天`);
@@ -189,7 +189,7 @@
                         if (ds === todayStr) cell.classList.add('today-highlight');
                         else if (publicHolidaysList.includes(ds)) cell.classList.add('public-holiday');
                         cell.innerHTML = `<div class="date-number">${date}</div>`;
-                        if (holidayNames[ds]) cell.innerHTML += `<div class="holiday-label">${holidayNames[ds]}</div>`;
+                        if (holidayNames[ds]) cell.innerHTML += `<div style="font-size:0.75em;color:#d84315;font-weight:bold;">${holidayNames[ds]}</div>`;
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                             let tc = r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record');
                             cell.innerHTML += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
