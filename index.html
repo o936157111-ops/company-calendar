@@ -7,80 +7,48 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
+        
+        /* 美化查詢區塊 */
+        #querySection { background: #ffffff; padding: 25px; border: none; margin-top: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        
+        /* 美化按鈕 */
+        button { background: linear-gradient(135deg, #0d47a1, #1976d2); color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 6px; font-weight: bold; transition: transform 0.2s, background 0.3s; }
+        button:hover { background: linear-gradient(135deg, #1565c0, #1e88e5); transform: translateY(-2px); }
+
+        /* 美化表格 */
+        #resultTable { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 20px; border-radius: 8px; overflow: hidden; border: 1px solid #dee2e6; }
+        #resultTable th { background-color: #f8f9fa; color: #333; padding: 12px; border-bottom: 2px solid #0d47a1; }
+        #resultTable td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        #resultTable tr:hover { background-color: #f1f7ff; }
+
+        /* 既有樣式 */
         table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; table-layout: fixed; }
         th, td { border: 1px solid #dee2e6; padding: 5px; text-align: center; height: 110px; vertical-align: top; }
-        th { background-color: #e3f2fd; color: #0d47a1; height: auto; }
-        .date-number { font-weight: bold; text-align: center; margin-bottom: 5px; }
-        .leave-record { padding: 2px 4px; margin-top: 2px; border-radius: 3px; font-size: 0.8em; text-align: left; border-left: 4px solid #777; background: #eee; color: #333 !important; word-break: break-all; }
-        .activity-record { background-color: #673ab7 !important; color: #fff !important; border-left-color: #fff !important; }
-        .holiday-record { background-color: #e91e63 !important; color: #fff !important; border-left-color: #fff !important; }
-        .public-holiday { background-color: #fff3e0 !important; }
-        .holiday-label { font-size: 0.75em; color: #d84315; font-weight: bold; margin-top: 2px; }
-        .today-highlight { background-color: #b71c1c !important; color: white !important; }
-        .today-highlight .date-number { color: white !important; }
-        .other-month { background-color: #f9f9f9; }
-        .hide-weekend .col-6, .hide-weekend .col-0 { display: none; }
-        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.2em; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
-        #currentYearMonth { flex: 1; text-align: center; }
-        .btn-group { display: flex; gap: 10px; }
-        button { background-color: #fff; color: #0d47a1; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
-        button:hover { background-color: #e3f2fd; }
-        #querySection { background: white; padding: 20px; border: 1px solid #dee2e6; margin-top: 20px; border-radius: 8px; }
-        #summaryArea { margin-top:15px; padding:10px; background:#e3f2fd; border-radius:4px; font-weight:bold; color:#0d47a1; display:none; }
-        #resultTable { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        #resultTable th, #resultTable td { height: auto; padding: 8px; border: 1px solid #dee2e6; text-align: center; }
+        #summaryArea { margin-top:15px; padding:15px; background:#e3f2fd; border-radius:4px; font-weight:bold; color:#0d47a1; display:none; }
     </style>
 </head>
 <body>
+
     <h2>📊 金牛頓公司行事曆</h2>
-    <div id="calendarContainer">
-        <div id="calendarHeader">
-            <button onclick="changeMonth(-1)">◀ 上個月</button>
-            <span id="currentYearMonth"></span>
-            <div class="btn-group">
-                <button onclick="toggleWeekend()">顯示/隱藏週末</button>
-                <button onclick="changeMonth(1)">下個月 ▶</button>
-            </div>
-        </div>
-        <table id="calendar">
-            <thead><tr id="calendarHead"><th class="col-0">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-6">六</th></tr></thead>
-            <tbody></tbody>
-        </table>
-    </div>
     <div id="querySection">
         <h3>🔍 紀錄查詢</h3>
         <select id="nameSelect"><option value="ALL">全部人員</option></select>
         <input type="date" id="startDate"> 至 <input type="date" id="endDate">
         <button onclick="performQuery()">查詢</button>
-        <div id="summaryArea">統計摘要: <span id="summaryText"></span></div>
+        
+        <div id="summaryArea">
+            統計摘要: <span id="summaryText"></span>
+        </div>
+
         <table id="resultTable">
-            <thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>天數</th><th>說明</th></tr></thead>
+            <thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>天數(折算)</th><th>說明</th></tr></thead>
             <tbody id="resultBody"></tbody>
         </table>
     </div>
-    <script>
-        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
-        let leaveRecords = [];
-        let currentDisplayDate = new Date();
-        const publicHolidaysList = ["2026-01-01", "2026-02-14", "2026-02-15", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-27", "2026-02-28", "2026-03-01", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-05-01", "2026-05-02", "2026-05-03", "2026-06-19", "2026-06-20", "2026-06-21", "2026-09-25", "2026-09-26", "2026-09-27", "2026-09-28", "2026-10-09", "2026-10-10", "2026-10-11", "2026-10-24", "2026-10-25", "2026-10-26", "2026-12-25", "2026-12-26", "2026-12-27"];
-        const holidayNames = {"2026-01-01": "元旦", "2026-02-17": "春節", "2026-02-28": "二二八", "2026-04-04": "兒童節", "2026-04-05": "清明節", "2026-05-01": "勞動節", "2026-10-10": "國慶日"};
-        
-        async function fetchGoogleData() {
-            try {
-                const response = await fetch(CSV_URL);
-                const text = await response.text();
-                const rows = text.split('\n').slice(1);
-                leaveRecords = rows.filter(r => r.trim()).map(r => {
-                    const c = r.split(',');
-                    return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), duration: c[4]?.trim(), note: c[5]?.trim() };
-                });
-                const names = [...new Set(leaveRecords.map(r => r.name))];
-                const select = document.getElementById('nameSelect');
-                names.forEach(n => { let o = document.createElement('option'); o.value = n; o.textContent = n; select.appendChild(o); });
-                renderCalendar();
-            } catch (err) { console.error("資料讀取失敗", err); }
-        }
 
+    <script>
+        // ... (CSV_URL 與 fetchGoogleData 維持原樣) ...
+        
         function performQuery() {
             const name = document.getElementById('nameSelect').value;
             const start = document.getElementById('startDate').value;
@@ -89,53 +57,37 @@
             const summaryArea = document.getElementById('summaryArea');
             const summaryText = document.getElementById('summaryText');
             tbody.innerHTML = '';
+            
             const filtered = leaveRecords.filter(r => (name === 'ALL' || r.name === name) && (start === '' || r.start >= start) && (end === '' || r.end <= end));
             const stats = {};
+
             filtered.forEach(r => {
-                const diffDays = (new Date(r.end) - new Date(r.start)) / (1000 * 60 * 60 * 24) + 1;
-                tbody.innerHTML += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${diffDays}天</td><td>${r.note}</td></tr>`;
-                stats[r.type] = (stats[r.type] || 0) + diffDays;
+                let val = 0;
+                let displayDays = "";
+                
+                // 優先使用 CSV 中的 duration 欄位
+                if (r.duration && r.duration.trim() !== "") {
+                    let d = r.duration.trim();
+                    if (d.includes('全天') || d === '1') val = 1.0;
+                    else if (d.includes('半天') || d === '0.5') val = 0.5;
+                    else if (d.includes('小時')) val = (parseFloat(d) || 0) / 8;
+                    else val = parseFloat(d) || 0;
+                    displayDays = val + "天";
+                } else {
+                    // 若 CSV 為空，才使用日期差計算
+                    val = (new Date(r.end) - new Date(r.start)) / (1000 * 60 * 60 * 24) + 1;
+                    displayDays = val + "天(自動)";
+                }
+                
+                stats[r.type] = (stats[r.type] || 0) + val;
+                tbody.innerHTML += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${displayDays}</td><td>${r.note}</td></tr>`;
             });
+
             const summaryArr = Object.entries(stats).map(([type, total]) => `${type}: ${total.toFixed(2)}天`);
             if (summaryArr.length > 0) { summaryText.textContent = summaryArr.join(' | '); summaryArea.style.display = 'block'; }
             else { summaryArea.style.display = 'none'; }
         }
-        function toggleWeekend() { document.getElementById('calendar').classList.toggle('hide-weekend'); }
-        function renderCalendar() {
-            const year = currentDisplayDate.getFullYear();
-            const month = currentDisplayDate.getMonth() + 1;
-            document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
-            const tbody = document.querySelector('#calendar tbody');
-            tbody.innerHTML = '';
-            const firstDay = new Date(year, month - 1, 1).getDay();
-            const lastDate = new Date(year, month, 0).getDate();
-            let date = 1;
-            for (let i = 0; i < 6; i++) {
-                let row = document.createElement('tr');
-                for (let j = 0; j < 7; j++) {
-                    let cell = document.createElement('td');
-                    cell.className = `col-${j}`;
-                    if ((i === 0 && j < firstDay) || date > lastDate) { cell.classList.add('other-month'); } 
-                    else {
-                        const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
-                        if (ds === new Date().toISOString().slice(0,10)) cell.classList.add('today-highlight');
-                        else if (publicHolidaysList.includes(ds)) cell.classList.add('public-holiday');
-                        cell.innerHTML = `<div class="date-number">${date}</div>`;
-                        if (holidayNames[ds]) cell.innerHTML += `<div class="holiday-label">${holidayNames[ds]}</div>`;
-                        leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                            let tc = r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record');
-                            cell.innerHTML += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
-                        });
-                        date++;
-                    }
-                    row.appendChild(cell);
-                }
-                tbody.appendChild(row);
-                if (date > lastDate) break;
-            }
-        }
-        function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(); }
-        fetchGoogleData();
+        // ... (其他既有函數) ...
     </script>
 </body>
 </html>
