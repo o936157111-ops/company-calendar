@@ -11,18 +11,24 @@
         th, td { border: 1px solid #dee2e6; padding: 5px; text-align: center; height: 110px; vertical-align: top; }
         th { background-color: #e3f2fd; color: #0d47a1; height: auto; }
         
-        /* 確保日期數字置中 */
         .date-number { font-weight: bold; text-align: center; margin-bottom: 5px; }
         
+        /* 一般紀錄樣式 */
         .leave-record { padding: 2px 4px; margin-top: 2px; border-radius: 3px; font-size: 0.8em; text-align: left; border-left: 4px solid #777; background: #eee; color: #333 !important; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: #fff !important; border-left-color: #fff !important; }
         .holiday-record { background-color: #e91e63 !important; color: #fff !important; border-left-color: #fff !important; }
         
-        .today-highlight { background-color: #b71c1c !important; color: white !important; }
-        .today-highlight .leave-record { background: #fff !important; color: #000 !important; border-left-color: #333 !important; }
-        
+        /* 115年放假日底色 (提高權重) */
         .public-holiday { background-color: #fff3e0 !important; }
         .holiday-label { font-size: 0.75em; color: #d84315; font-weight: bold; margin-top: 2px; }
+        
+        /* 今天：紅色底 */
+        .today-highlight { background-color: #b71c1c !important; color: white !important; }
+        .today-highlight .date-number { color: white !important; }
+        .today-highlight .leave-record { background: #fff !important; color: #000 !important; border-left-color: #333 !important; }
+        
+        /* 非本月日期的背景色 */
+        .other-month { background-color: #f9f9f9; }
         
         /* 隱藏週末的邏輯 */
         .hide-weekend .col-6, .hide-weekend .col-0 { display: none; }
@@ -35,7 +41,7 @@
         button:hover { background-color: #e3f2fd; }
     </style>
 </head>
-<body id="body">
+<body>
 
     <h2>📊 金牛頓公司行事曆</h2>
 
@@ -64,8 +70,13 @@
         let leaveRecords = [];
         let currentDisplayDate = new Date();
 
-        const publicHolidaysList = ["2026-01-01", "2026-02-17", "2026-02-28", "2026-04-04", "2026-04-05", "2026-05-01", "2026-10-10"];
-        const holidayNames = {"2026-01-01": "元旦", "2026-02-17": "春節", "2026-02-28": "二二八", "2026-04-04": "兒童節", "2026-04-05": "清明節", "2026-05-01": "勞動節", "2026-10-10": "國慶日"};
+        // 115年國定假日清單
+        const publicHolidaysList = ["2026-01-01", "2026-02-14", "2026-02-15", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22", "2026-02-27", "2026-02-28", "2026-03-01", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-05-01", "2026-05-02", "2026-05-03", "2026-06-19", "2026-06-20", "2026-06-21", "2026-09-25", "2026-09-26", "2026-09-27", "2026-09-28", "2026-10-09", "2026-10-10", "2026-10-11", "2026-10-24", "2026-10-25", "2026-10-26", "2026-12-25", "2026-12-26", "2026-12-27"];
+        
+        const holidayNames = {
+            "2026-01-01": "元旦", "2026-02-17": "春節", "2026-02-28": "二二八", "2026-04-04": "兒童節", 
+            "2026-04-05": "清明節", "2026-05-01": "勞動節", "2026-10-10": "國慶日"
+        };
         
         async function fetchGoogleData() {
             try {
@@ -106,12 +117,16 @@
                     cell.className = `col-${j}`;
                     
                     if ((i === 0 && j < firstDay) || date > lastDate) {
-                        cell.style.background = "#f9f9f9";
+                        cell.classList.add('other-month');
                     } else {
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
                         
-                        if (ds === todayStr) cell.classList.add('today-highlight');
-                        else if (publicHolidaysList.includes(ds)) cell.classList.add('public-holiday');
+                        // 判斷是否為今天或國定假日
+                        if (ds === todayStr) {
+                            cell.classList.add('today-highlight');
+                        } else if (publicHolidaysList.includes(ds)) {
+                            cell.classList.add('public-holiday');
+                        }
                         
                         cell.innerHTML = `<div class="date-number">${date}</div>`;
                         if (holidayNames[ds]) cell.innerHTML += `<div class="holiday-label">${holidayNames[ds]}</div>`;
