@@ -98,8 +98,11 @@
                 const rowsL = dataL.split('\n').slice(1);
                 leaveRecords = rowsL.filter(r => r.trim() !== '').map((row, index) => {
                     const cols = row.split(',');
-                    // 計算邏輯：支援 "整天", "半天", "X小時"
-                    let val = 1;
+                    const start = new Date(cols[2]);
+                    const end = new Date(cols[3]);
+                    const diffDays = (Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+                    
+                    let val = diffDays;
                     let durStr = cols[4] || "整天";
                     if (durStr.includes("半天")) val = 0.5;
                     else if (durStr.includes("小時")) val = parseFloat(durStr) / 8;
@@ -131,7 +134,7 @@
             let stats = {};
             let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>時數/天數</th><th>說明/原因</th></tr></thead><tbody>`;
             res.forEach(r => {
-                stats[r.type] = (stats[r.type] || 0) + (r.calcValue || 1);
+                stats[r.type] = (stats[r.type] || 0) + r.calcValue;
                 h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red; font-weight:bold;">${r.displayDuration}</td><td style="text-align:left;">${r.note}</td></tr>`;
             });
             
