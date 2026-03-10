@@ -7,22 +7,20 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
-        table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; }
-        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
-        th { background-color: #e3f2fd; color: #0d47a1; }
-        #calendar td { height: 110px; vertical-align: top; width: 14.28%; position: relative; }
+        table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; table-layout: fixed; }
+        th, td { border: 1px solid #dee2e6; padding: 5px; text-align: center; height: 110px; vertical-align: top; }
+        th { background-color: #e3f2fd; color: #0d47a1; height: auto; }
         
-        .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #777; background: #eee; color: #333 !important; word-break: break-all; }
+        .leave-record { padding: 2px 4px; margin-top: 2px; border-radius: 3px; font-size: 0.8em; text-align: left; border-left: 4px solid #777; background: #eee; color: #333 !important; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: #fff !important; border-left-color: #fff !important; }
         .holiday-record { background-color: #e91e63 !important; color: #fff !important; border-left-color: #fff !important; }
         
-        /* 今天：紅色底 */
         .today-highlight { background-color: #b71c1c !important; color: white !important; }
-        .today-highlight div { color: white !important; }
         .today-highlight .leave-record { background: #fff !important; color: #000 !important; border-left-color: #333 !important; }
-
-        /* 115年國定假期：淡橘色底 */
+        
         .public-holiday { background-color: #fff3e0 !important; }
+        /* 假日名稱的小標籤 */
+        .holiday-label { font-size: 0.75em; color: #d84315; font-weight: bold; margin-top: 2px; }
         
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
     </style>
@@ -37,20 +35,26 @@
             <span id="currentYearMonth"></span>
             <button onclick="changeMonth(1)">下個月 ▶</button>
         </div>
-        <table id="calendar"><thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody></tbody></table>
+        <table id="calendar">
+            <thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
         
-        // 115年假期資料
-        const publicHolidays = [
-            "2026-01-01", "2026-02-14", "2026-02-15", "2026-02-16", "2026-02-17", "2026-02-18", "2026-02-19", "2026-02-20", "2026-02-21", "2026-02-22",
-            "2026-02-27", "2026-02-28", "2026-03-01", "2026-04-03", "2026-04-04", "2026-04-05", "2026-04-06", "2026-05-01", "2026-05-02", "2026-05-03",
-            "2026-06-19", "2026-06-20", "2026-06-21", "2026-09-25", "2026-09-26", "2026-09-27", "2026-09-28", "2026-10-09", "2026-10-10", "2026-10-11",
-            "2026-10-24", "2026-10-25", "2026-10-26", "2026-12-25", "2026-12-26", "2026-12-27"
-        ];
-
+        // 使用物件儲存 115 年假期名稱 (簡化版，您可依需求補充)
+        const publicHolidays = {
+            "2026-01-01": "元旦",
+            "2026-02-17": "春節",
+            "2026-02-28": "二二八紀念日",
+            "2026-04-04": "兒童節",
+            "2026-04-05": "清明節",
+            "2026-05-01": "勞動節",
+            "2026-10-10": "國慶日"
+        };
+        
         let leaveRecords = [];
         let currentDisplayDate = new Date();
 
@@ -89,9 +93,14 @@
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
                         
                         if (ds === todayStr) cell.classList.add('today-highlight');
-                        else if (publicHolidays.includes(ds)) cell.classList.add('public-holiday');
+                        else if (publicHolidays[ds]) cell.classList.add('public-holiday');
                         
                         cell.innerHTML = `<div style="font-weight:bold;text-align:right;">${date}</div>`;
+                        
+                        // 顯示假日名稱
+                        if (publicHolidays[ds]) {
+                            cell.innerHTML += `<div class="holiday-label">${publicHolidays[ds]}</div>`;
+                        }
                         
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                             let tc = r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record');
