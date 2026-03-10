@@ -31,16 +31,14 @@
     <h2>📊 金牛頓公司活動行事曆</h2>
     <table id="inputTable">
         <thead><tr><th>人員</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>說明/原因</th><th>操作</th></tr></thead>
-        <tbody>
-            <tr>
-                <td><select id="inputNameSelect"></select></td>
-                <td><select id="inputLeaveType"><option value="活動">活動</option><option value="假期">假期</option></select></td>
-                <td><input type="date" id="inputStartDate"></td>
-                <td><input type="date" id="inputEndDate"></td>
-                <td><input type="text" id="inputNote"></td>
-                <td><button onclick="addLeaveRecord()" style="background:#4CAF50; color:white; border:none; padding:10px; cursor:pointer;">新增</button></td>
-            </tr>
-        </tbody>
+        <tbody><tr>
+            <td><select id="inputNameSelect"></select></td>
+            <td><select id="inputLeaveType"><option value="活動">活動</option><option value="假期">假期</option></select></td>
+            <td><input type="date" id="inputStartDate"></td>
+            <td><input type="date" id="inputEndDate"></td>
+            <td><input type="text" id="inputNote"></td>
+            <td><button onclick="addLeaveRecord()" style="background:#4CAF50; color:white; border:none; padding:10px; cursor:pointer;">新增</button></td>
+        </tr></tbody>
     </table>
 
     <div id="calendarContainer" class="hide-weekend">
@@ -67,6 +65,7 @@
         const nameList = ["金牛頓", "ERIC", "JAMES", "方順黌", "王冠峯", "余品橋", "李佩娟", "高欣宜", "陳秀燕", "陳品鈞", "陳靖昂", "陳慧真", "曾晨杰", "楊添仰", "詹淑敏", "戴政宏", "蘇威丞"];
         let leaveRecords = [], currentDisplayDate = new Date();
 
+        // 加入自動抓取 Google 資料的函數
         async function fetchGoogleData() {
             try {
                 const response = await fetch(GOOGLE_CSV_URL);
@@ -74,10 +73,10 @@
                 const rows = data.split('\n').slice(1);
                 leaveRecords = rows.filter(r => r.trim() !== '').map((row, i) => {
                     const c = row.split(',');
-                    return { id: i, name: c[0], type: c[1], start: c[2], end: c[3], note: c[4] || '' };
+                    return { name: c[0], type: c[1], start: c[2], end: c[3], note: c[4] || '' };
                 });
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("讀取失敗"); }
         }
 
         function renderCalendar(y, m) {
@@ -85,7 +84,7 @@
             const tbody = document.querySelector('#calendar tbody'); tbody.innerHTML = '';
             const first = new Date(y, m - 1, 1).getDay(), last = new Date(y, m, 0).getDate();
             let d = 1, row = '<tr>';
-            for (let i = 0; i < 7; i++) row += i < first ? '<td></td>' : `<td>${d++}</td>`;
+            for (let i = 0; i < 7; i++) row += i < first ? '<td></td>' : `<td><div style="font-size:12px;">${d++}</div></td>`;
             tbody.innerHTML += row + '</tr>';
             while (d <= last) {
                 row = '<tr>';
@@ -93,7 +92,7 @@
                     const ds = `${y}-${String(m).padStart(2,'0')}-${String(d++).padStart(2,'0')}`;
                     let cell = `<td><div style="font-size:12px;">${d-1}</div>`;
                     leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                        // 修正：使用 includes 確保包含「活動」二字即顯示深藍色
+                        // 【修改 1】：使用 .includes('活動')，確保抓取內容時不受隱形字元影響而顏色消失
                         let tc = r.type.includes('活動') ? 'activity-record' : 'holiday-record';
                         cell += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
                     });
@@ -106,7 +105,7 @@
         function queryRecords() {
             const s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
             let res = leaveRecords.filter(r => (r.start >= s && r.start <= e) || (r.end >= s && r.end <= e));
-            // 修正：表格欄位移除「操作」，確保欄位正確
+            // 【修改 2】：將表格標頭與內容的「操作」欄位移除，確保與 Google 資料表吻合
             let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>說明/原因</th></tr></thead><tbody>`;
             res.forEach(r => h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${r.note}</td></tr>`);
             document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
@@ -118,6 +117,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const sel = document.getElementById('inputNameSelect'), qSel = document.getElementById('queryNameSelect');
             nameList.forEach(n => { sel.add(new Option(n, n)); qSel.add(new Option(n, n)); });
+            // 執行資料抓取
             fetchGoogleData();
         });
     </script>
