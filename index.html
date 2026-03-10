@@ -31,16 +31,12 @@
 
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
-        /* 金牛頓專用深藍色底色 */
         .golden-record { background-color: #0d47a1 !important; color: white !important; }
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
 
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
-        .suggestion-input-box { background-color: #fff3e0; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
-        .suggestion-form-row { display: flex; gap: 10px; margin-bottom: 10px; }
-        
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
-        @media print { .no-print, .action-section, .suggestion-input-box, #calendarHeader button, .del-btn { display: none !important; } }
+        @media print { .no-print, .action-section, #calendarHeader button, .del-btn { display: none !important; } }
     </style>
 </head>
 <body>
@@ -62,7 +58,7 @@
     <div class="suggestion-display-box">
         <h3 style="margin-top:0; color: #e65100;">📋 公司活動建議內容</h3>
         <table id="suggestionTable">
-            <thead><tr><th style="width:20%">活動名稱</th><th style="width:70%">建議詳情</th><th style="width:10%">操作</th></tr></thead>
+            <thead><tr><th style="width:25%">項目</th><th style="width:75%">建議詳情</th></tr></thead>
             <tbody id="suggestionList"></tbody>
         </table>
     </div>
@@ -84,52 +80,40 @@
 
     <div id="queryResultArea"></div>
 
-    <div class="suggestion-input-box">
-        <h3 style="margin-top:0; color: #e65100;">💡 新增建議內容</h3>
-        <div class="suggestion-form-row">
-            <input type="text" id="suggestTitle" style="flex:1" placeholder="活動建議名稱">
-            <input type="text" id="suggestImgUrl" style="flex:1" placeholder="圖片連結網址 (選填)">
-        </div>
-        <div class="suggestion-form-row">
-            <textarea id="suggestContent" style="flex:3" placeholder="請輸入建議項目..."></textarea>
-        </div>
-        <div style="text-align:right;"><button onclick="addSuggestion()" style="background:#ff9800; color:white; border:none; padding:10px 30px; border-radius:4px; font-weight:bold; cursor:pointer; height:40px;">提交建議</button></div>
-    </div>
-
     <script>
         let currentDisplayDate = new Date();
         const STORAGE_KEY = 'leaveCalendarRecords';
-        const SUGGEST_KEY = 'companyActivitySuggestions';
+        const SUGGEST_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=1793548004&single=true&output=csv';
         const GOOGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
         const nameList = ["請選擇人員", "金牛頓", "ERIC", "JAMES", "方順黌", "王冠峯", "余品橋", "李佩娟", "高欣宜", "陳秀燕", "陳品鈞", "陳靖昂", "陳慧真", "曾晨杰", "楊添仰", "詹淑敏", "戴政宏", "蘇威丞"];
         const ADMIN_PASSWORD = "AB)&@)cd0526";
 
         let leaveRecords = [];
-        let suggestions = JSON.parse(localStorage.getItem(SUGGEST_KEY)) || [];
+        let suggestions = [];
 
-        async function fetchGoogleData() {
+        async function fetchData() {
             try {
-                const response = await fetch(GOOGLE_CSV_URL);
-                const data = await response.text();
-                const rows = data.split('\n').slice(1);
-                leaveRecords = rows.filter(row => row.trim() !== '').map((row, index) => {
+                // Fetch Leave Records
+                const resL = await fetch(GOOGLE_CSV_URL);
+                const dataL = await resL.text();
+                const rowsL = dataL.split('\n').slice(1);
+                leaveRecords = rowsL.filter(r => r.trim() !== '').map((row, index) => {
                     const cols = row.split(',');
-                    return {
-                        id: Date.now() + index,
-                        name: cols[0],
-                        type: cols[1],
-                        start: cols[2],
-                        end: cols[3],
-                        displayDuration: cols[4],
-                        note: cols[5] || '',
-                        calcValue: 1
-                    };
+                    return { id: Date.now() + index, name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: cols[4], note: cols[5] || '', calcValue: 1 };
                 });
+
+                // Fetch Suggestions
+                const resS = await fetch(SUGGEST_CSV_URL);
+                const dataS = await resS.text();
+                const rowsS = dataS.split('\n').slice(1);
+                suggestions = rowsS.filter(r => r.trim() !== '').map(row => {
+                    const cols = row.split(',');
+                    return { title: cols[0], content: cols[1] };
+                });
+                
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-            } catch (e) {
-                console.error("無法讀取 Google 資料", e);
-                leaveRecords = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-            }
+                renderSuggestions();
+            } catch (e) { console.error("資料讀取失敗", e); }
         }
 
         function toggleWeekend() { document.getElementById('calendarContainer').classList.toggle('hide-weekend'); }
@@ -149,9 +133,7 @@
             if (res.length > 0) {
                 let stText = Object.keys(stats).map(k => `${k}: ${stats[k].toFixed(2)}天`).join(' | ');
                 h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="4">統計摘要</td><td colspan="3">${stText}</td></tr>`;
-            } else {
-                h += `<tr><td colspan="7">此範圍內查無資料</td></tr>`;
-            }
+            } else { h += `<tr><td colspan="7">此範圍內查無資料</td></tr>`; }
             document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
         }
 
@@ -211,45 +193,19 @@
             calendarEl.innerHTML = html + '</tbody>';
         }
 
-        function addSuggestion() {
-            const t = document.getElementById('suggestTitle').value.trim();
-            const c = document.getElementById('suggestContent').value.trim();
-            const img = document.getElementById('suggestImgUrl').value.trim();
-            if(!t || !c) return alert("請填寫內容");
-            suggestions.push({ id: Date.now(), title: t, content: c, imageUrl: img });
-            localStorage.setItem(SUGGEST_KEY, JSON.stringify(suggestions));
-            renderSuggestions();
-            document.getElementById('suggestTitle').value = ''; 
-            document.getElementById('suggestContent').value = '';
-            document.getElementById('suggestImgUrl').value = '';
-        }
-
-        function deleteSuggestion(id) {
-            if (confirm("確定刪除此建議內容？")) {
-                const pwd = prompt("請輸入密碼：");
-                if (pwd === ADMIN_PASSWORD) {
-                    suggestions = suggestions.filter(s => String(s.id) !== String(id));
-                    localStorage.setItem(SUGGEST_KEY, JSON.stringify(suggestions));
-                    renderSuggestions();
-                } else if (pwd !== null) { alert("密碼錯誤"); }
-            }
-        }
-
         function renderSuggestions() {
             document.getElementById('suggestionList').innerHTML = suggestions.map(s => {
-                const imgTag = s.imageUrl ? `<div style="margin-top:10px;"><a href="${s.imageUrl}" target="_blank"><img src="${s.imageUrl}" alt="圖片" style="max-width:150px; max-height:150px; border:1px solid #ccc; border-radius:4px; cursor:pointer;"></a><div style="font-size:11px; color:#888;">(點擊放大原圖)</div></div>` : '';
-                return `<tr><td style="font-weight:bold;">${s.title}</td><td style="text-align:left; white-space:pre-wrap;">${s.content}${imgTag}</td><td><button onclick="deleteSuggestion('${s.id}')" class="del-btn" style="background:#f44336; color:white; border:none; padding:5px 8px; border-radius:4px; cursor:pointer;">刪除</button></td></tr>`;
+                return `<tr><td style="font-weight:bold;">${s.title}</td><td style="text-align:left; white-space:pre-wrap;">${s.content}</td></tr>`;
             }).join('');
         }
 
-        function exportBackupJSON() { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({records: leaveRecords, suggestions: suggestions})], {type: 'application/json'})); a.download = "金牛頓備份.json"; a.click(); }
+        function exportBackupJSON() { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify({records: leaveRecords})], {type: 'application/json'})); a.download = "金牛頓備份.json"; a.click(); }
         function importBackupJSON(input) {
             if(!input.files[0]) return;
             const reader = new FileReader();
             reader.onload = (e) => {
                 const data = JSON.parse(e.target.result);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(data.records || []));
-                localStorage.setItem(SUGGEST_KEY, JSON.stringify(data.suggestions || []));
                 location.reload(); 
             };
             reader.readAsText(input.files[0]);
@@ -272,8 +228,7 @@
             const qSel = document.getElementById('queryNameSelect');
             qSel.add(new Option("全部人員", "全部人員")); 
             nameList.slice(1).forEach(n => qSel.add(new Option(n, n)));
-            fetchGoogleData(); 
-            renderSuggestions();
+            fetchData(); 
         });
     </script>
 </body></html>
