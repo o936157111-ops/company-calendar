@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>金牛頓公司行事曆 v2</title>
+    <title>金牛頓公司行事曆</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
@@ -12,23 +12,22 @@
         th { background-color: #e3f2fd; color: #0d47a1; }
         #calendar td { height: 110px; vertical-align: top; width: 14.28%; position: relative; }
         
-        /* 基本記錄樣式 - 確保在白底時為深色字，在深色底時為白色 */
+        /* 一般請假記錄 (預設白色背景，深色字) */
         .leave-record { 
             padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; 
             text-align: left; border-left: 4px solid #777; background: #eee; 
-            color: #000 !important; /* 強制設定黑色文字以確保清晰 */
-            word-break: break-all; 
+            color: #333 !important; word-break: break-all; 
         }
         
-        /* 強制特殊背景內的文字為白色 */
+        /* 特殊記錄 (強制深藍底，白字) */
         .activity-record { background-color: #673ab7 !important; color: #fff !important; border-left-color: #fff !important; }
         .holiday-record { background-color: #e91e63 !important; color: #fff !important; border-left-color: #fff !important; }
         
-        /* 當天深紅色底色 */
-        .today-highlight { background-color: #b71c1c !important; color: white !important; }
+        /* 當天深藍色底色 (與 header 統一) */
+        .today-highlight { background-color: #0d47a1 !important; color: white !important; }
         .today-highlight div { color: white !important; }
         
-        /* 針對當天格子內的請假記錄，強制修正顏色 */
+        /* 當天內部的請假資訊也改為深藍背景或淺色呈現，確保清晰 */
         .today-highlight .leave-record {
             background: rgba(255, 255, 255, 0.2) !important;
             color: #fff !important;
@@ -40,7 +39,7 @@
 </head>
 <body>
 
-    <h2>📊 金牛頓公司行事曆 (雲端同步版)</h2>
+    <h2>📊 金牛頓公司行事曆</h2>
 
     <div id="calendarContainer">
         <div id="calendarHeader">
