@@ -12,26 +12,27 @@
         th { background-color: #e3f2fd; color: #0d47a1; }
         #calendar td { height: 110px; vertical-align: top; width: 14.28%; position: relative; }
         
-        /* 一般請假記錄 (預設白色背景，深色字) */
+        /* 一般記錄 (白底，深色字) */
         .leave-record { 
             padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; 
             text-align: left; border-left: 4px solid #777; background: #eee; 
             color: #333 !important; word-break: break-all; 
         }
         
-        /* 特殊記錄 (強制深藍底，白字) */
+        /* 特殊記錄 (活動/假期 - 保持原有顏色) */
         .activity-record { background-color: #673ab7 !important; color: #fff !important; border-left-color: #fff !important; }
         .holiday-record { background-color: #e91e63 !important; color: #fff !important; border-left-color: #fff !important; }
         
-        /* 當天深藍色底色 (與 header 統一) */
-        .today-highlight { background-color: #0d47a1 !important; color: white !important; }
+        /* 今天：底色紅色 */
+        .today-highlight { background-color: #b71c1c !important; color: white !important; }
         .today-highlight div { color: white !important; }
         
-        /* 當天內部的請假資訊也改為深藍背景或淺色呈現，確保清晰 */
+        /* 重點修正：當天格子內的「一般請假記錄」 */
+        /* 改為白底深色字，確保在紅色背景上非常清晰 */
         .today-highlight .leave-record {
-            background: rgba(255, 255, 255, 0.2) !important;
-            color: #fff !important;
-            border-left-color: #fff !important;
+            background: #fff !important;
+            color: #000 !important;
+            border-left-color: #333 !important;
         }
 
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
