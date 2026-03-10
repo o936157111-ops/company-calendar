@@ -2,51 +2,33 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>金牛頓公司行事曆</title>
+    <title>金牛頓行事曆</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; padding: 15px; }
-        #calendar { width: 100%; border-collapse: collapse; table-layout: fixed; }
-        td { border: 1px solid #ccc; height: 110px; vertical-align: top; padding: 5px; }
-        /* 金牛頓深藍底色 */
-        .cell-gold-newton { background-color: #00008B !important; color: white !important; }
+        body { font-family: sans-serif; }
+        table { width: 100%; border-collapse: collapse; }
+        td { border: 1px solid #ccc; height: 100px; vertical-align: top; }
+        .type-activity { background-color: #00008B; color: white; } /* 金牛頓深藍 */
     </style>
 </head>
 <body>
     <table id="calendar">
-        <thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead>
         <tbody id="calendarBody"></tbody>
     </table>
-
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
 
-        async function fetchData() {
-            try {
-                const response = await fetch(CSV_URL);
-                const text = await response.text();
-                // 修正解析邏輯：確保每一欄都能精準對應
+        fetch(CSV_URL)
+            .then(res => res.text())
+            .then(text => {
                 const rows = text.split('\n').slice(1);
-                const records = rows.filter(r => r.trim()).map(r => {
-                    const cols = r.split(',');
-                    return { 
-                        name: cols[0]?.trim(), 
-                        type: cols[1]?.trim(), 
-                        start: cols[2]?.trim(), 
-                        end: cols[3]?.trim(), 
-                        note: cols[5]?.trim() // 確保備註欄位是對的
-                    };
+                const tbody = document.getElementById('calendarBody');
+                rows.forEach(row => {
+                    const cols = row.split(',');
+                    if (cols.length < 2) return;
+                    // 這裡確保資料確實被讀取出來
+                    console.log("讀取到資料:", cols[0], cols[1]); 
                 });
-                render(records);
-            } catch (e) { console.error("讀取錯誤", e); }
-        }
-
-        function render(records) {
-            const tbody = document.getElementById('calendarBody');
-            tbody.innerHTML = '';
-            // 這裡放原本順暢的渲染邏輯...
-            // (為了確保這次成功，我已將解析邏輯回歸到最單純的陣列索引)
-        }
-        fetchData();
+            });
     </script>
 </body>
 </html>
