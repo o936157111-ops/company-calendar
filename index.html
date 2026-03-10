@@ -25,7 +25,6 @@
         
         .date-number { font-weight: bold; text-align: center; padding: 5px; background: rgba(0,0,0,0.02); border-bottom: 1px solid #eee; }
         
-        /* 隱藏週末設定 */
         #calendarContainer.hide-weekend #calendar th:nth-child(1),
         #calendarContainer.hide-weekend #calendar td:nth-child(1),
         #calendarContainer.hide-weekend #calendar th:nth-child(7),
@@ -46,7 +45,6 @@
             .action-section div { flex-direction: column; align-items: stretch !important; gap: 5px !important; }
             .action-section button, .action-section select, .action-section input { width: 100%; }
         }
-        @media print { .no-print, .action-section, #calendarHeader button { display: none !important; } }
     </style>
 </head>
 <body>
@@ -104,7 +102,7 @@
                     const cols = row.split(',');
                     const start = new Date(cols[2]), end = new Date(cols[3]);
                     const diffDays = (Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
-                    return { name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: cols[4] || "整天", note: cols[5] || '', calcValue: (cols[4]||"").includes("半天")?0.5:((cols[4]||"").includes("小時")?parseFloat(cols[4])/8:diffDays) };
+                    return { id: Date.now() + index, name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: cols[4] || "整天", note: cols[5] || '', calcValue: (cols[4]||"").includes("半天")?0.5:((cols[4]||"").includes("小時")?parseFloat(cols[4])/8:diffDays) };
                 });
                 const resS = await fetch(SUGGEST_CSV_URL);
                 const dataS = await resS.text();
@@ -144,9 +142,54 @@
 
         function renderSuggestions() { document.getElementById('suggestionList').innerHTML = suggestions.map(s => `<tr><td style="font-weight:bold;">${s.title}</td><td style="text-align:left; white-space:pre-wrap;">${s.content}</td></tr>`).join(''); }
         function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); }
-        function queryRecords() { /* 原有查詢邏輯 */ const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value; if(!s||!e) return alert("請選日期範圍"); let res = leaveRecords.filter(r=>((r.start>=s&&r.start<=e)||(r.end>=s&&r.end<=e))&&(qName==="全部人員"||r.name===qName)); res.sort((a,b)=>a.start<b.start?-1:1); let stats={}, h=`<table><thead><tr><th>姓名</th><th>事別</th><th>開始</th><th>結束</th><th>時數/天數</th><th>說明</th></tr></thead><tbody>`; res.forEach(r=>{ stats[r.type]=(stats[r.type]||0)+r.calcValue; h+=`<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red; font-weight:bold;">${r.displayDuration}</td><td style="text-align:left;">${r.note}</td></tr>` }); if(res.length>0) h+=`<tr style="background:#fff9c4; font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${Object.keys(stats).map(k=>`${k}:${stats[k].toFixed(2)}天`).join(' | ')}</td></tr>`; document.getElementById('queryResultArea').innerHTML=h+'</tbody></table>'; }
-        function exportToExcel() { /* 原有匯出邏輯 */ const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value; if(!s||!e) return alert("請先查詢"); let res = leaveRecords.filter(r=>((r.start>=s&&r.start<=e)||(r.end>=s&&r.end<=e))&&(qName==="全部人員"||r.name===qName)); if(res.length==0) return alert("無資料"); let csv="\ufeff姓名,事別,開始,結束,時數/天數,說明\n"; res.forEach(r=>{csv+=`${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note.replace(/,/g,"，")}\n`}); const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'}); const link=document.createElement("a"); link.href=URL.createObjectURL(blob); link.download="匯出紀錄.csv"; link.click(); }
-        function saveFullHTML() { const queryArea = document.getElementById('queryResultArea'); const originalContent = queryArea.innerHTML; queryArea.innerHTML = ""; const blob = new Blob(['<!DOCTYPE html>\n' + document.documentElement.outerHTML], { type: 'text/html' }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = `金牛頓行事曆_${new Date().toISOString().split('T')[0]}.html`; a.click(); queryArea.innerHTML = originalContent; }
+        
+        // 恢復完整的查詢邏輯
+        function queryRecords() {
+            const qName = document.getElementById('queryNameSelect').value;
+            const s = document.getElementById('queryStartDate').value;
+            const e = document.getElementById('queryEndDate').value;
+            if (!s || !e) return alert("請選擇日期範圍");
+            let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
+            res.sort((a,b) => a.start < b.start ? -1 : 1);
+            let stats = {};
+            let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>時數/天數</th><th>說明/原因</th></tr></thead><tbody>`;
+            res.forEach(r => {
+                stats[r.type] = (stats[r.type] || 0) + r.calcValue;
+                h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red; font-weight:bold;">${r.displayDuration}</td><td style="text-align:left;">${r.note}</td></tr>`;
+            });
+            if (res.length > 0) {
+                h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${Object.keys(stats).map(k => `${k}: ${stats[k].toFixed(2)}天`).join(' | ')}</td></tr>`;
+            } else { h += `<tr><td colspan="6">無查詢結果</td></tr>`; }
+            document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
+        }
+
+        function exportToExcel() {
+            const qName = document.getElementById('queryNameSelect').value;
+            const s = document.getElementById('queryStartDate').value;
+            const e = document.getElementById('queryEndDate').value;
+            if (!s || !e) return alert("請先進行查詢");
+            let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
+            if (res.length == 0) return alert("目前無資料可匯出");
+            let csv = "\ufeff姓名,事別,開始日期,結束日期,時數/天數,說明/原因\n";
+            res.forEach(r => { csv += `${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note.replace(/,/g, "，")}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `查詢結果_${s}_至_${e}.csv`;
+            link.click();
+        }
+
+        function saveFullHTML() {
+            const queryArea = document.getElementById('queryResultArea');
+            const originalContent = queryArea.innerHTML;
+            queryArea.innerHTML = "";
+            const blob = new Blob(['<!DOCTYPE html>\n' + document.documentElement.outerHTML], { type: 'text/html' });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `金牛頓行事曆_${new Date().toISOString().split('T')[0]}.html`;
+            a.click();
+            queryArea.innerHTML = originalContent;
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const qSel = document.getElementById('queryNameSelect');
