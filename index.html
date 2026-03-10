@@ -10,18 +10,33 @@
         
         #calendarContainer { border: 2px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1200px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         
-        /* 【已加深】設定深藍色背景與白色文字 */
-        #calendarHeader { background-color: #0d47a1 !important; color: white !important; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        /* 這裡強制設定為極深的藍色 (Hex: #0d47a1) */
+        #calendarHeader { 
+            background-color: #0d47a1 !important; 
+            color: #ffffff !important; 
+            padding: 15px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background-color: #e3f2fd; padding: 12px; text-align: center; font-size: 1em; color: #1565c0; }
         td { border: 1px solid #dee2e6; height: 120px; vertical-align: top; padding: 8px; font-size: 0.9em; }
         
-        /* 按鈕樣式調整 */
-        button { padding: 5px 15px; cursor: pointer; border-radius: 4px; border: none; font-weight: bold; background: white; color: #0d47a1; }
+        /* 按鈕樣式設定 */
+        button { 
+            padding: 5px 15px; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            border: 1px solid #ffffff; 
+            font-weight: bold; 
+            background: #ffffff; 
+            color: #0d47a1; 
+        }
         button:hover { background-color: #e3f2fd; }
 
-        /* 顏色識別系統 */
+        /* 紀錄顏色系統 */
         .leave-record { padding: 3px 6px; margin-top: 3px; font-size: 0.85em; text-align: left; border-radius: 3px; cursor: pointer; margin-bottom: 2px; }
         .type-activity { background-color: #0d47a1 !important; color: #ffffff !important; border-left: 4px solid #002171 !important; } 
         .type-business { background-color: #bbdefb !important; color: #0d47a1 !important; border-left: 4px solid #1976d2 !important; } 
