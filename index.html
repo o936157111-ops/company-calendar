@@ -11,6 +11,9 @@
         th, td { border: 1px solid #dee2e6; padding: 5px; text-align: center; height: 110px; vertical-align: top; }
         th { background-color: #e3f2fd; color: #0d47a1; height: auto; }
         
+        /* 確保日期數字置中 */
+        .date-number { font-weight: bold; text-align: center; margin-bottom: 5px; }
+        
         .leave-record { padding: 2px 4px; margin-top: 2px; border-radius: 3px; font-size: 0.8em; text-align: left; border-left: 4px solid #777; background: #eee; color: #333 !important; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: #fff !important; border-left-color: #fff !important; }
         .holiday-record { background-color: #e91e63 !important; color: #fff !important; border-left-color: #fff !important; }
@@ -21,33 +24,36 @@
         .public-holiday { background-color: #fff3e0 !important; }
         .holiday-label { font-size: 0.75em; color: #d84315; font-weight: bold; margin-top: 2px; }
         
-        /* Header 與按鈕佈局 */
+        /* 隱藏週末的邏輯 */
+        .hide-weekend .col-6, .hide-weekend .col-0 { display: none; }
+        
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.2em; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
         #currentYearMonth { flex: 1; text-align: center; }
         .btn-group { display: flex; gap: 10px; }
         
-        /* 統一按鈕風格 */
         button { background-color: #fff; color: #0d47a1; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         button:hover { background-color: #e3f2fd; }
     </style>
 </head>
-<body>
+<body id="body">
 
     <h2>📊 金牛頓公司行事曆</h2>
 
     <div id="calendarContainer">
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
-            
             <span id="currentYearMonth"></span>
-            
             <div class="btn-group">
                 <button onclick="toggleWeekend()">顯示/隱藏週末</button>
                 <button onclick="changeMonth(1)">下個月 ▶</button>
             </div>
         </div>
         <table id="calendar">
-            <thead id="calendarHead"></thead>
+            <thead>
+                <tr id="calendarHead">
+                    <th class="col-0">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-6">六</th>
+                </tr>
+            </thead>
             <tbody></tbody>
         </table>
     </div>
@@ -55,7 +61,6 @@
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
         
-        let showWeekend = true;
         let leaveRecords = [];
         let currentDisplayDate = new Date();
 
@@ -76,8 +81,7 @@
         }
 
         function toggleWeekend() {
-            showWeekend = !showWeekend;
-            renderCalendar();
+            document.getElementById('calendar').classList.toggle('hide-weekend');
         }
 
         function renderCalendar() {
@@ -85,15 +89,10 @@
             const month = currentDisplayDate.getMonth() + 1;
             document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
             
-            const head = document.getElementById('calendarHead');
             const tbody = document.querySelector('#calendar tbody');
             tbody.innerHTML = '';
             
-            head.innerHTML = showWeekend ? 
-                '<tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>' :
-                '<tr><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr>';
-            
-            const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
+            const firstDay = new Date(year, month - 1, 1).getDay();
             const lastDate = new Date(year, month, 0).getDate();
             
             let date = 1;
@@ -102,13 +101,11 @@
 
             for (let i = 0; i < 6; i++) {
                 let row = document.createElement('tr');
-                for (let j = 0; j < (showWeekend ? 7 : 5); j++) {
+                for (let j = 0; j < 7; j++) {
                     let cell = document.createElement('td');
-                    let dayOfWeek = showWeekend ? j : (j + 1); 
+                    cell.className = `col-${j}`;
                     
-                    let isPadding = (i === 0 && dayOfWeek < firstDayOfMonth) || date > lastDate;
-                    
-                    if (isPadding) {
+                    if ((i === 0 && j < firstDay) || date > lastDate) {
                         cell.style.background = "#f9f9f9";
                     } else {
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
@@ -116,7 +113,7 @@
                         if (ds === todayStr) cell.classList.add('today-highlight');
                         else if (publicHolidaysList.includes(ds)) cell.classList.add('public-holiday');
                         
-                        cell.innerHTML = `<div style="font-weight:bold;text-align:right;">${date}</div>`;
+                        cell.innerHTML = `<div class="date-number">${date}</div>`;
                         if (holidayNames[ds]) cell.innerHTML += `<div class="holiday-label">${holidayNames[ds]}</div>`;
                         
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
