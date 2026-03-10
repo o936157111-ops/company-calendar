@@ -18,7 +18,7 @@
         .activity-record { background-color: #673ab7 !important; color: #fff !important; border-left-color: #fff !important; }
         .holiday-record { background-color: #e91e63 !important; color: #fff !important; border-left-color: #fff !important; }
         
-        /* 115年放假日底色 (提高權重) */
+        /* 115年放假日底色 */
         .public-holiday { background-color: #fff3e0 !important; }
         .holiday-label { font-size: 0.75em; color: #d84315; font-weight: bold; margin-top: 2px; }
         
@@ -75,6 +75,11 @@
         <select id="nameSelect"><option value="ALL">全部人員</option></select>
         <input type="date" id="startDate"> 至 <input type="date" id="endDate">
         <button onclick="performQuery()">查詢</button>
+        
+        <div id="summaryArea" style="margin-top:15px; padding:10px; background:#e3f2fd; border-radius:4px; font-weight:bold; color:#0d47a1; display:none;">
+            統計摘要: <span id="summaryText"></span>
+        </div>
+
         <table id="resultTable">
             <thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>時數/天數</th><th>說明</th></tr></thead>
             <tbody id="resultBody"></tbody>
@@ -111,14 +116,35 @@
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
             const tbody = document.getElementById('resultBody');
+            const summaryArea = document.getElementById('summaryArea');
+            const summaryText = document.getElementById('summaryText');
+            
             tbody.innerHTML = '';
-            leaveRecords.filter(r => 
+            
+            const filtered = leaveRecords.filter(r => 
                 (name === 'ALL' || r.name === name) &&
                 (start === '' || r.start >= start) &&
                 (end === '' || r.end <= end)
-            ).forEach(r => {
+            );
+
+            filtered.forEach(r => {
                 tbody.innerHTML += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${r.duration}</td><td>${r.note}</td></tr>`;
             });
+
+            // 計算摘要
+            const stats = {};
+            filtered.forEach(r => {
+                const val = parseFloat(r.duration) || 0;
+                stats[r.type] = (stats[r.type] || 0) + val;
+            });
+
+            const summaryArr = Object.entries(stats).map(([type, total]) => `${type}: ${total.toFixed(2)}天`);
+            if (summaryArr.length > 0) {
+                summaryText.textContent = summaryArr.join(' | ');
+                summaryArea.style.display = 'block';
+            } else {
+                summaryArea.style.display = 'none';
+            }
         }
 
         function toggleWeekend() { document.getElementById('calendar').classList.toggle('hide-weekend'); }
