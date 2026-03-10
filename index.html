@@ -8,17 +8,15 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
         
-        /* 表格樣式 */
+        /* 表格與深藍色表頭設定 */
         table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; table-layout: fixed; }
         th, td { border: 1px solid #dee2e6; padding: 5px; text-align: center; height: 110px; vertical-align: top; }
-        
-        /* 強制設定深藍色表頭 */
-        thead th { background-color: #0d47a1 !important; color: white !important; padding: 10px; }
+        thead th { background-color: #0d47a1 !important; color: white !important; padding: 12px; font-weight: bold; }
         
         .date-number { font-weight: bold; text-align: center; margin-bottom: 5px; }
         .leave-record { padding: 2px 4px; margin-top: 2px; border-radius: 3px; font-size: 0.8em; text-align: left; border-left: 4px solid #777; background: #eee; color: #333 !important; word-break: break-all; }
         
-        /* 權重設定 */
+        /* 樣式權重 */
         .today-highlight { background-color: #b71c1c !important; color: white !important; }
         .today-highlight .date-number { color: white !important; }
         .today-highlight .leave-record { background: #fff !important; color: #000 !important; }
@@ -30,14 +28,14 @@
         
         #calendarHeader { background-color: #0d47a1 !important; color: white !important; padding: 15px; font-size: 1.2em; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
         #currentYearMonth { flex: 1; text-align: center; }
-        .btn-group { display: flex; gap: 10px; }
         
-        /* 按鈕與查詢區塊樣式 */
-        button, select, input { padding: 10px 20px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; font-weight: bold; }
-        button { background-color: #fff; color: #0d47a1; border: none; }
+        /* 統一按鈕與查詢區塊 */
+        .btn-group { display: flex; gap: 8px; }
+        button, select, input { padding: 8px 16px; cursor: pointer; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; }
+        button { background-color: #fff; color: #0d47a1; font-weight: bold; transition: 0.2s; }
         button:hover { background-color: #e3f2fd; }
         
-        #querySection { background: white; padding: 20px; border: 1px solid #dee2e6; margin-top: 20px; border-radius: 8px; }
+        #querySection { background: white; padding: 20px; border: 1px solid #dee2e6; margin-top: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         #resultTable { width: 100%; border-collapse: collapse; margin-top: 15px; }
         #resultTable th, #resultTable td { height: auto; padding: 10px; border: 1px solid #dee2e6; text-align: center; }
     </style>
@@ -51,7 +49,7 @@
             <button onclick="changeMonth(-1)">◀ 上個月</button>
             <span id="currentYearMonth"></span>
             <div class="btn-group">
-                <button onclick="toggleWeekend()">顯示/隱藏週末</button>
+                <button onclick="toggleWeekend()">隱藏/顯示週末</button>
                 <button onclick="changeMonth(1)">下個月 ▶</button>
             </div>
         </div>
@@ -93,7 +91,6 @@
                     const c = r.split(',');
                     return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), duration: c[4]?.trim(), note: c[5]?.trim() };
                 });
-                
                 const names = [...new Set(leaveRecords.map(r => r.name))];
                 const select = document.getElementById('nameSelect');
                 names.forEach(n => { let o = document.createElement('option'); o.value = n; o.textContent = n; select.appendChild(o); });
