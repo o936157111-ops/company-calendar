@@ -21,7 +21,11 @@
         .public-holiday { background-color: #fff3e0 !important; }
         .holiday-label { font-size: 0.75em; color: #d84315; font-weight: bold; margin-top: 2px; }
         
-        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.2em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        /* Header 與按鈕佈局 */
+        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.2em; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
+        #currentYearMonth { flex: 1; text-align: center; }
+        .btn-group { display: flex; gap: 10px; }
+        
         /* 統一按鈕風格 */
         button { background-color: #fff; color: #0d47a1; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         button:hover { background-color: #e3f2fd; }
@@ -35,11 +39,12 @@
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
             
-            <button onclick="toggleWeekend()">切換週末顯示</button>
-            
             <span id="currentYearMonth"></span>
             
-            <button onclick="changeMonth(1)">下個月 ▶</button>
+            <div class="btn-group">
+                <button onclick="toggleWeekend()">顯示/隱藏週末</button>
+                <button onclick="changeMonth(1)">下個月 ▶</button>
+            </div>
         </div>
         <table id="calendar">
             <thead id="calendarHead"></thead>
@@ -88,7 +93,6 @@
                 '<tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr>' :
                 '<tr><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th></tr>';
             
-            // 修正渲染邏輯：隱藏週末時只顯示週一到週五
             const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
             const lastDate = new Date(year, month, 0).getDate();
             
@@ -102,7 +106,6 @@
                     let cell = document.createElement('td');
                     let dayOfWeek = showWeekend ? j : (j + 1); 
                     
-                    // 檢查空白格
                     let isPadding = (i === 0 && dayOfWeek < firstDayOfMonth) || date > lastDate;
                     
                     if (isPadding) {
@@ -110,19 +113,16 @@
                     } else {
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
                         
-                        // 只在該日期是平日(或顯示週末)時渲染
-                        if (showWeekend || (dayOfWeek >= 1 && dayOfWeek <= 5)) {
-                            if (ds === todayStr) cell.classList.add('today-highlight');
-                            else if (publicHolidaysList.includes(ds)) cell.classList.add('public-holiday');
-                            
-                            cell.innerHTML = `<div style="font-weight:bold;text-align:right;">${date}</div>`;
-                            if (holidayNames[ds]) cell.innerHTML += `<div class="holiday-label">${holidayNames[ds]}</div>`;
-                            
-                            leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                                let tc = r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record');
-                                cell.innerHTML += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
-                            });
-                        }
+                        if (ds === todayStr) cell.classList.add('today-highlight');
+                        else if (publicHolidaysList.includes(ds)) cell.classList.add('public-holiday');
+                        
+                        cell.innerHTML = `<div style="font-weight:bold;text-align:right;">${date}</div>`;
+                        if (holidayNames[ds]) cell.innerHTML += `<div class="holiday-label">${holidayNames[ds]}</div>`;
+                        
+                        leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
+                            let tc = r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record');
+                            cell.innerHTML += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
+                        });
                         date++;
                     }
                     row.appendChild(cell);
