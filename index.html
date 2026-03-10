@@ -10,47 +10,29 @@
         table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; table-layout: fixed; }
         th, td { border: 1px solid #dee2e6; padding: 5px; text-align: center; height: 110px; vertical-align: top; }
         th { background-color: #e3f2fd; color: #0d47a1; height: auto; }
-        
         .date-number { font-weight: bold; text-align: center; margin-bottom: 5px; }
-        
-        /* 一般紀錄樣式 */
         .leave-record { padding: 2px 4px; margin-top: 2px; border-radius: 3px; font-size: 0.8em; text-align: left; border-left: 4px solid #777; background: #eee; color: #333 !important; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: #fff !important; border-left-color: #fff !important; }
         .holiday-record { background-color: #e91e63 !important; color: #fff !important; border-left-color: #fff !important; }
-        
-        /* 115年放假日底色 (提高權重) */
         .public-holiday { background-color: #fff3e0 !important; }
         .holiday-label { font-size: 0.75em; color: #d84315; font-weight: bold; margin-top: 2px; }
-        
-        /* 今天：紅色底 */
         .today-highlight { background-color: #b71c1c !important; color: white !important; }
         .today-highlight .date-number { color: white !important; }
-        .today-highlight .leave-record { background: #fff !important; color: #000 !important; border-left-color: #333 !important; }
-        
-        /* 非本月日期的背景色 */
         .other-month { background-color: #f9f9f9; }
-        
-        /* 隱藏週末的邏輯 */
         .hide-weekend .col-6, .hide-weekend .col-0 { display: none; }
-        
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.2em; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
         #currentYearMonth { flex: 1; text-align: center; }
         .btn-group { display: flex; gap: 10px; }
-        
         button { background-color: #fff; color: #0d47a1; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; font-weight: bold; }
         button:hover { background-color: #e3f2fd; }
-
-        /* 查詢區塊與列表樣式 */
         #querySection { background: white; padding: 20px; border: 1px solid #dee2e6; margin-top: 20px; border-radius: 8px; }
+        #summaryArea { margin-top:15px; padding:10px; background:#e3f2fd; border-radius:4px; font-weight:bold; color:#0d47a1; display:none; }
         #resultTable { width: 100%; border-collapse: collapse; margin-top: 15px; }
         #resultTable th, #resultTable td { height: auto; padding: 8px; border: 1px solid #dee2e6; text-align: center; }
-        #nameSelect, #startDate, #endDate { padding: 8px; margin-right: 5px; border: 1px solid #ccc; border-radius: 4px; }
     </style>
 </head>
 <body>
-
     <h2>📊 金牛頓公司行事曆</h2>
-
     <div id="calendarContainer">
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
@@ -61,26 +43,21 @@
             </div>
         </div>
         <table id="calendar">
-            <thead>
-                <tr id="calendarHead">
-                    <th class="col-0">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-6">六</th>
-                </tr>
-            </thead>
+            <thead><tr id="calendarHead"><th class="col-0">日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th class="col-6">六</th></tr></thead>
             <tbody></tbody>
         </table>
     </div>
-
     <div id="querySection">
         <h3>🔍 紀錄查詢</h3>
         <select id="nameSelect"><option value="ALL">全部人員</option></select>
         <input type="date" id="startDate"> 至 <input type="date" id="endDate">
         <button onclick="performQuery()">查詢</button>
+        <div id="summaryArea">統計摘要: <span id="summaryText"></span></div>
         <table id="resultTable">
-            <thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>時數/天數</th><th>說明</th></tr></thead>
+            <thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>天數</th><th>說明</th></tr></thead>
             <tbody id="resultBody"></tbody>
         </table>
     </div>
-
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
         let leaveRecords = [];
@@ -97,11 +74,9 @@
                     const c = r.split(',');
                     return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), duration: c[4]?.trim(), note: c[5]?.trim() };
                 });
-                
                 const names = [...new Set(leaveRecords.map(r => r.name))];
                 const select = document.getElementById('nameSelect');
                 names.forEach(n => { let o = document.createElement('option'); o.value = n; o.textContent = n; select.appendChild(o); });
-                
                 renderCalendar();
             } catch (err) { console.error("資料讀取失敗", err); }
         }
@@ -111,18 +86,21 @@
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
             const tbody = document.getElementById('resultBody');
+            const summaryArea = document.getElementById('summaryArea');
+            const summaryText = document.getElementById('summaryText');
             tbody.innerHTML = '';
-            leaveRecords.filter(r => 
-                (name === 'ALL' || r.name === name) &&
-                (start === '' || r.start >= start) &&
-                (end === '' || r.end <= end)
-            ).forEach(r => {
-                tbody.innerHTML += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${r.duration}</td><td>${r.note}</td></tr>`;
+            const filtered = leaveRecords.filter(r => (name === 'ALL' || r.name === name) && (start === '' || r.start >= start) && (end === '' || r.end <= end));
+            const stats = {};
+            filtered.forEach(r => {
+                const diffDays = (new Date(r.end) - new Date(r.start)) / (1000 * 60 * 60 * 24) + 1;
+                tbody.innerHTML += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${diffDays}天</td><td>${r.note}</td></tr>`;
+                stats[r.type] = (stats[r.type] || 0) + diffDays;
             });
+            const summaryArr = Object.entries(stats).map(([type, total]) => `${type}: ${total.toFixed(2)}天`);
+            if (summaryArr.length > 0) { summaryText.textContent = summaryArr.join(' | '); summaryArea.style.display = 'block'; }
+            else { summaryArea.style.display = 'none'; }
         }
-
         function toggleWeekend() { document.getElementById('calendar').classList.toggle('hide-weekend'); }
-
         function renderCalendar() {
             const year = currentDisplayDate.getFullYear();
             const month = currentDisplayDate.getMonth() + 1;
@@ -132,8 +110,6 @@
             const firstDay = new Date(year, month - 1, 1).getDay();
             const lastDate = new Date(year, month, 0).getDate();
             let date = 1;
-            const todayStr = new Date().toISOString().slice(0,10);
-
             for (let i = 0; i < 6; i++) {
                 let row = document.createElement('tr');
                 for (let j = 0; j < 7; j++) {
@@ -142,7 +118,7 @@
                     if ((i === 0 && j < firstDay) || date > lastDate) { cell.classList.add('other-month'); } 
                     else {
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
-                        if (ds === todayStr) cell.classList.add('today-highlight');
+                        if (ds === new Date().toISOString().slice(0,10)) cell.classList.add('today-highlight');
                         else if (publicHolidaysList.includes(ds)) cell.classList.add('public-holiday');
                         cell.innerHTML = `<div class="date-number">${date}</div>`;
                         if (holidayNames[ds]) cell.innerHTML += `<div class="holiday-label">${holidayNames[ds]}</div>`;
