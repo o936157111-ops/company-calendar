@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>金牛頓公司活動行事曆 (雲端版)</title>
+    <title>金牛頓公司行事曆 v2</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
@@ -12,29 +12,29 @@
         th { background-color: #e3f2fd; color: #0d47a1; }
         #calendar td { height: 110px; vertical-align: top; width: 14.28%; position: relative; }
         
-        /* 基本記錄樣式 */
+        /* 基本記錄樣式 - 確保在白底時為深色字，在深色底時為白色 */
         .leave-record { 
             padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; 
-            text-align: left; border-left: 4px solid #999; background: #eee; 
-            color: #333; word-break: break-all; 
+            text-align: left; border-left: 4px solid #777; background: #eee; 
+            color: #000 !important; /* 強制設定黑色文字以確保清晰 */
+            word-break: break-all; 
         }
         
-        /* 特殊類別樣式 (強制白色字體) */
-        .activity-record { background-color: #673ab7 !important; color: white !important; }
-        .holiday-record { background-color: #e91e63 !important; color: white !important; }
+        /* 強制特殊背景內的文字為白色 */
+        .activity-record { background-color: #673ab7 !important; color: #fff !important; border-left-color: #fff !important; }
+        .holiday-record { background-color: #e91e63 !important; color: #fff !important; border-left-color: #fff !important; }
         
-        /* 當天深紅色底色樣式 */
+        /* 當天深紅色底色 */
         .today-highlight { background-color: #b71c1c !important; color: white !important; }
         .today-highlight div { color: white !important; }
         
-        /* 確保所有在深色格子內的記錄文字均為白色 */
-        .today-highlight .leave-record, 
-        .activity-record, 
-        .holiday-record {
-            color: white !important;
-            border-left-color: rgba(255,255,255,0.5);
+        /* 針對當天格子內的請假記錄，強制修正顏色 */
+        .today-highlight .leave-record {
+            background: rgba(255, 255, 255, 0.2) !important;
+            color: #fff !important;
+            border-left-color: #fff !important;
         }
-        
+
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
@@ -53,7 +53,6 @@
 
     <script>
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
-        
         let leaveRecords = [];
         let currentDisplayDate = new Date();
 
@@ -67,9 +66,7 @@
                     return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), note: c[5]?.trim() };
                 });
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-            } catch (err) {
-                console.error("資料讀取失敗", err);
-            }
+            } catch (err) { console.error("資料讀取失敗", err); }
         }
 
         function renderCalendar(year, month) {
@@ -92,7 +89,6 @@
                         cell.style.background = "#f9f9f9";
                     } else {
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
-                        
                         if (ds === todayStr) cell.classList.add('today-highlight');
                         
                         cell.innerHTML = `<div style="font-weight:bold;text-align:right;">${date}</div>`;
