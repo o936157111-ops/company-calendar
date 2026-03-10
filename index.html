@@ -21,8 +21,6 @@
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
-        .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
-        .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -71,7 +69,7 @@
                 const rows = data.split('\n').slice(1);
                 leaveRecords = rows.filter(r => r.trim() !== '').map((row, i) => {
                     const c = row.split(',');
-                    return { id: i, name: c[0], type: c[1], start: c[2], end: c[3], note: c[4] || '' };
+                    return { name: c[0], type: c[1], start: c[2], end: c[3], note: c[4] || '' };
                 });
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
             } catch (e) { console.error(e); }
@@ -90,7 +88,6 @@
                         const ds = `${y}-${String(m).padStart(2,'0')}-${String(d++).padStart(2,'0')}`;
                         let cell = `<td><div style="font-size:12px; font-weight:bold;">${d-1}</div>`;
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                            // 保持原本邏輯，確保活動是深藍 (activity-record)
                             let tc = r.type.includes('活動') ? 'activity-record' : 'holiday-record';
                             cell += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
                         });
@@ -105,15 +102,12 @@
         function queryRecords() {
             const s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
             let res = leaveRecords.filter(r => (r.start >= s && r.start <= e) || (r.end >= s && r.end <= e));
-            // 這裡移除操作欄位
             let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>說明/原因</th></tr></thead><tbody>`;
             res.forEach(r => h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${r.note}</td></tr>`);
             document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
         }
 
-        // 保持其他原有功能...
         function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); }
-        function addLeaveRecord() {} // 保持您原有的完整定義
         
         document.addEventListener('DOMContentLoaded', () => {
             const sel = document.getElementById('inputNameSelect'), qSel = document.getElementById('queryNameSelect');
