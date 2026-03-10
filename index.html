@@ -93,16 +93,20 @@
 
         async function fetchData() {
             try {
-                // Fetch Leave Records
                 const resL = await fetch(GOOGLE_CSV_URL);
                 const dataL = await resL.text();
                 const rowsL = dataL.split('\n').slice(1);
                 leaveRecords = rowsL.filter(r => r.trim() !== '').map((row, index) => {
                     const cols = row.split(',');
-                    return { id: Date.now() + index, name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: cols[4], note: cols[5] || '', calcValue: 1 };
+                    // 計算邏輯：支援 "整天", "半天", "X小時"
+                    let val = 1;
+                    let durStr = cols[4] || "整天";
+                    if (durStr.includes("半天")) val = 0.5;
+                    else if (durStr.includes("小時")) val = parseFloat(durStr) / 8;
+                    
+                    return { id: Date.now() + index, name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: durStr, note: cols[5] || '', calcValue: val };
                 });
 
-                // Fetch Suggestions
                 const resS = await fetch(SUGGEST_CSV_URL);
                 const dataS = await resS.text();
                 const rowsS = dataS.split('\n').slice(1);
@@ -123,17 +127,18 @@
             if (!s || !e) return alert("請選日期範圍後再執行查詢");
             let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
             res.sort((a, b) => a.start < b.start ? -1 : 1);
+            
             let stats = {};
-            let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>時數/天數</th><th>說明/原因</th><th>操作</th></tr></thead><tbody>`;
+            let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>時數/天數</th><th>說明/原因</th></tr></thead><tbody>`;
             res.forEach(r => {
-                const dur = r.displayDuration || "1天";
                 stats[r.type] = (stats[r.type] || 0) + (r.calcValue || 1);
-                h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red; font-weight:bold;">${dur}</td><td style="text-align:left;">${r.note}</td><td><button onclick="doDelete('${r.id}')" style="background:#f44336; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">刪除</button></td></tr>`;
+                h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red; font-weight:bold;">${r.displayDuration}</td><td style="text-align:left;">${r.note}</td></tr>`;
             });
+            
             if (res.length > 0) {
                 let stText = Object.keys(stats).map(k => `${k}: ${stats[k].toFixed(2)}天`).join(' | ');
-                h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="4">統計摘要</td><td colspan="3">${stText}</td></tr>`;
-            } else { h += `<tr><td colspan="7">此範圍內查無資料</td></tr>`; }
+                h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${stText}</td></tr>`;
+            } else { h += `<tr><td colspan="6">此範圍內查無資料</td></tr>`; }
             document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
         }
 
@@ -143,25 +148,12 @@
             let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
             if (res.length === 0) return alert("目前查詢範圍內無資料可匯出");
             let csvContent = "\ufeff姓名,事別,開始日期,結束日期,時數/天數,說明/原因\n";
-            res.forEach(r => { csvContent += `${r.name},${r.type},${r.start},${r.end},${r.displayDuration || "1天"},${r.note.replace(/,/g, "，")}\n`; });
+            res.forEach(r => { csvContent += `${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note.replace(/,/g, "，")}\n`; });
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
             link.download = `金牛頓查詢紀錄_${s}_至_${e}.csv`;
             link.click();
-        }
-
-        function doDelete(id) {
-            if (confirm("確定刪除？")) {
-                const pwd = prompt("請輸入密碼：");
-                if (pwd === ADMIN_PASSWORD) {
-                    leaveRecords = leaveRecords.filter(r => String(r.id) !== String(id));
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(leaveRecords));
-                    renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-                    const s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
-                    if(s && e) { queryRecords(); } else { document.getElementById('queryResultArea').innerHTML = ""; }
-                } else if (pwd !== null) { alert("密碼錯誤"); }
-            }
         }
 
         function renderCalendar(year, month) {
@@ -182,8 +174,7 @@
                         row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}"><div style="font-weight:bold;text-align:right;">${date}</div>`;
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                             let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
-                            let durLabel = (r.displayDuration && r.displayDuration !== '整天') ? `(${r.displayDuration})` : '';
-                            row += `<div class="leave-record ${tc}">${r.name}-${r.note}${durLabel}</div>`;
+                            row += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
                         });
                         row += `</td>`; date++;
                     }
