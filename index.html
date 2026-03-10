@@ -22,7 +22,6 @@
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
-        /* 隱藏週末樣式 */
         #calendarContainer.hide-weekend #calendar th:nth-child(1),
         #calendarContainer.hide-weekend #calendar td:nth-child(1),
         #calendarContainer.hide-weekend #calendar th:nth-child(7),
@@ -35,6 +34,14 @@
 
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
+        
+        /* 手機響應式設定 */
+        @media screen and (max-width: 768px) {
+            #calendarContainer { overflow-x: auto; }
+            #calendar { min-width: 600px; }
+            .action-section div { flex-direction: column; align-items: stretch !important; gap: 5px !important; }
+            .action-section button, .action-section select, .action-section input { width: 100%; }
+        }
         @media print { .no-print, .action-section, #calendarHeader button { display: none !important; } }
     </style>
 </head>
