@@ -3,74 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
-    <title>金牛頓公司活動行事曆</title>
+    <title>金牛頓公司活動行事曆 (雲端版)</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
-        select, input[type="date"], input[type="text"], input[type="number"], textarea { height: 40px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; vertical-align: middle; }
         table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; }
         th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
         th { background-color: #e3f2fd; color: #0d47a1; }
+        #calendar td { height: 110px; vertical-align: top; width: 14.28%; position: relative; }
+        .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
+        .activity-record { background-color: #673ab7 !important; color: white !important; }
+        .holiday-record { background-color: #e91e63 !important; color: white !important; }
+        .admin-only { display: none; }
+        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
     </style>
 </head>
 <body>
 
-    <h2>📊 金牛頓公司活動行事曆</h2>
+    <h2>📊 金牛頓公司行事曆 (雲端同步版)</h2>
+
     <div id="calendarContainer">
         <div id="calendarHeader">
-            <button onclick="changeMonth(-1)">◀</button>
+            <button onclick="changeMonth(-1)">◀ 上個月</button>
             <span id="currentYearMonth"></span>
-            <button onclick="changeMonth(1)">▶</button>
+            <button onclick="changeMonth(1)">下個月 ▶</button>
         </div>
         <table id="calendar"><thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody></tbody></table>
     </div>
 
     <script>
-        // 設定 Google Sheet CSV 網址
+        // 設定您的 Google Sheet CSV 連結
         const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
         
-        // 核心修改：將原本讀取 localStorage 改為讀取 Google Sheet
-        async function loadDataFromGoogle() {
+        let leaveRecords = []; // 從 Google 撈回的資料存這裡
+        let currentDisplayDate = new Date();
+
+        // 核心功能：抓取網路資料
+        async function fetchGoogleData() {
             try {
                 const response = await fetch(CSV_URL);
                 const text = await response.text();
+                // 假設 CSV 格式：姓名,事別,開始日期,結束日期,時數,說明
                 const rows = text.split('\n').slice(1);
-                
-                // 將 Google 資料轉換為原來的 leaveRecords 陣列
                 leaveRecords = rows.filter(r => r.trim()).map(r => {
                     const c = r.split(',');
-                    return { 
-                        name: c[0]?.trim(), 
-                        type: c[1]?.trim(), 
-                        start: c[2]?.trim(), 
-                        end: c[3]?.trim(), 
-                        displayDuration: c[4]?.trim(), 
-                        note: c[5]?.trim() 
-                    };
+                    return { name: c[0]?.trim(), type: c[1]?.trim(), start: c[2]?.trim(), end: c[3]?.trim(), note: c[5]?.trim() };
                 });
-                
-                // 資料載入後，執行您原本 3/5 版本的所有初始化渲染
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
-                if (typeof renderSuggestions === 'function') renderSuggestions();
             } catch (err) {
-                console.error("雲端載入失敗，檢查網路或 CSV 連結", err);
+                console.error("資料讀取失敗，請確認 Google Sheet 是否已發佈", err);
             }
         }
 
-        // [將您原本 3/5 版本的所有 JavaScript 函式貼在此處]
-        // 包含：renderCalendar, renderSuggestions, addLeaveRecord, deleteRecord 等全部功能
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            // 取代原本直接呼叫 render 的動作，改為先抓資料
-            loadDataFromGoogle();
+        function renderCalendar(year, month) {
+            document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
+            const tbody = document.querySelector('#calendar tbody');
+            tbody.innerHTML = '';
             
-            // 保留原本的選單初始化邏輯
-            const sel = document.getElementById('inputNameSelect');
-            const qSel = document.getElementById('queryNameSelect');
-            if (sel) {
-                // ... (您原本的 nameList 處理邏輯) ...
+            const firstDay = new Date(year, month - 1, 1).getDay();
+            const lastDate = new Date(year, month, 0).getDate();
+            let date = 1;
+            
+            for (let i = 0; i < 6; i++) {
+                let row = document.createElement('tr');
+                for (let j = 0; j < 7; j++) {
+                    let cell = document.createElement('td');
+                    if ((i === 0 && j < firstDay) || date > lastDate) {
+                        cell.style.background = "#f9f9f9";
+                    } else {
+                        const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
+                        cell.innerHTML = `<div style="font-weight:bold;text-align:right;">${date}</div>`;
+                        
+                        // 篩選 Google 資料
+                        leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
+                            let tc = r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record');
+                            cell.innerHTML += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
+                        });
+                        date++;
+                    }
+                    row.appendChild(cell);
+                }
+                tbody.appendChild(row);
+                if (date > lastDate) break;
             }
-        });
+        }
+
+        function changeMonth(d) {
+            currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d);
+            renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
+        }
+
+        // 初始化
+        fetchGoogleData();
     </script>
 </body>
 </html>
