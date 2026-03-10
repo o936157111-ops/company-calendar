@@ -6,23 +6,26 @@
     <title>金牛頓公司行事曆</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; padding: 15px; background-color: #f8f9fa; margin: 0; }
+        
+        /* 標題樣式 */
         h2 { color: #0d47a1; margin: 15px 0; font-size: 1.8em; text-align: center; }
         
+        /* 行事曆容器與深藍色表頭 */
         #calendarContainer { border: 2px solid #0d47a1; background: white; border-radius: 8px; overflow: hidden; max-width: 1200px; margin: 0 auto; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* 【關鍵修正】加深後的深藍色底色 */
+        #calendarHeader { background-color: #0d47a1 !important; color: white !important; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
         
         table { width: 100%; border-collapse: collapse; table-layout: fixed; }
         th { background-color: #e3f2fd; padding: 12px; text-align: center; font-size: 1em; color: #1565c0; }
-        td { border: 1px solid #dee2e6; height: 120px; vertical-align: top; padding: 8px; font-size: 0.9em; overflow: hidden; }
+        td { border: 1px solid #dee2e6; height: 120px; vertical-align: top; padding: 8px; font-size: 0.9em; }
         
         /* 顏色識別系統 */
         .leave-record { 
             padding: 3px 6px; margin-top: 3px; font-size: 0.85em; text-align: left; 
-            border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            cursor: pointer; margin-bottom: 2px;
+            border-radius: 3px; cursor: pointer; margin-bottom: 2px;
         }
         
-        /* 確保樣式優先級 */
         .type-activity { background-color: #0d47a1 !important; color: #ffffff !important; border-left: 4px solid #002171 !important; } 
         .type-business { background-color: #bbdefb !important; color: #0d47a1 !important; border-left: 4px solid #1976d2 !important; } 
         .type-default { background-color: #eeeeee !important; color: #333 !important; border-left: 4px solid #999 !important; } 
@@ -34,9 +37,9 @@
     
     <div id="calendarContainer">
         <div id="calendarHeader">
-            <button onclick="changeMonth(-1)" style="padding: 5px 15px;">◀ 上個月</button>
+            <button onclick="changeMonth(-1)" style="padding: 5px 15px; cursor: pointer;">◀ 上個月</button>
             <span id="currentYearMonth" style="font-weight:bold; font-size: 1.2em;"></span>
-            <button onclick="changeMonth(1)" style="padding: 5px 15px;">下個月 ▶</button>
+            <button onclick="changeMonth(1)" style="padding: 5px 15px; cursor: pointer;">下個月 ▶</button>
         </div>
         <table id="calendar">
             <thead>
@@ -83,7 +86,6 @@
                 
                 leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                     let colorClass = 'type-default';
-                    // 這裡加了更強的判斷，確保「金牛頓活動」一定會被抓到
                     if (r.type && r.type.includes('金牛頓')) {
                         colorClass = 'type-activity';
                     } else if (r.type && r.type.includes('出差')) {
