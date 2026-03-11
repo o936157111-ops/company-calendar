@@ -14,8 +14,11 @@
         #currentYearMonth { font-size: 1.2em; font-weight: bold; }
 
         table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; table-layout: fixed; }
-        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
-        th { background-color: #e3f2fd; color: #0d47a1; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; }
+        th { background-color: #e3f2fd; color: #0d47a1; text-align: center; }
+        
+        /* 修正日期數字樣式：靠左上角 */
+        .date-number { font-weight: bold; padding: 5px; background: rgba(0,0,0,0.03); border-bottom: 1px solid #ddd; margin-bottom: 5px; }
         
         #suggestionTable { table-layout: auto; }
         #suggestionTable th:nth-child(1) { width: 120px; } 
@@ -25,7 +28,7 @@
         @media screen and (max-width: 768px) {
             #calendar { min-width: 100%; display: block; }
             #calendar thead, #calendar tbody, #calendar tr, #calendar th, #calendar td { display: block; width: 100%; }
-            #calendar td { height: auto; min-height: 120px; border-bottom: 2px solid #0d47a1; text-align: left !important; }
+            #calendar td { height: auto; min-height: 120px; border-bottom: 2px solid #0d47a1; }
             #calendar th { display: none; }
         }
 
@@ -35,7 +38,6 @@
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
-        #queryResultArea table { margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -111,7 +113,7 @@
                     else {
                         if (showWeekend || (j !== 0 && j !== 6)) {
                             const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
-                            row += `<td><div style="font-weight:bold;text-align:right;">${date}</div>`;
+                            row += `<td><div class="date-number">${date}</div>`;
                             leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                                 let tc = (r.name==='金牛頓')?'golden-record':(r.type==='活動'?'activity-record':(r.type==='假期'?'holiday-record':'leave-record'));
                                 row += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
