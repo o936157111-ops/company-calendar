@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
+<html lang="zh-TW"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>金牛頓公司活動行事曆</title>
@@ -8,47 +7,49 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
         
-        #calendarHeader { background-color: #0d47a1; color: white; padding: 10px; display: flex; flex-direction: column; gap: 5px; }
-        .header-row { display: flex; justify-content: space-between; align-items: center; width: 100%; height: 40px; }
-        #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; height: 35px; padding: 0 15px; cursor: pointer; border-radius: 4px; font-size: 0.9em; }
-        #currentYearMonth { font-size: 1.2em; font-weight: bold; }
-
-        table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; table-layout: fixed; }
-        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; }
-        th { background-color: #e3f2fd; color: #0d47a1; text-align: center; }
+        select, input[type="date"], input[type="text"], input[type="number"], textarea {
+            height: 40px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; vertical-align: middle;
+        }
+        table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
+        th { background-color: #e3f2fd; color: #0d47a1; }
         
-        /* 修正日期數字樣式：靠左上角 */
-        .date-number { font-weight: bold; padding: 5px; background: rgba(0,0,0,0.03); border-bottom: 1px solid #ddd; margin-bottom: 5px; }
-        
-        #suggestionTable { table-layout: auto; }
-        #suggestionTable th:nth-child(1) { width: 120px; } 
-
         #calendarContainer { margin-top: 30px; border: 1px solid #0d47a1; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; background: white; }
         
-        @media screen and (max-width: 768px) {
-            #calendar { min-width: 100%; display: block; }
-            #calendar thead, #calendar tbody, #calendar tr, #calendar th, #calendar td { display: block; width: 100%; }
-            #calendar td { height: auto; min-height: 120px; border-bottom: 2px solid #0d47a1; }
-            #calendar th { display: none; }
-        }
+        /* 兩行式導覽列排版 */
+        #calendarHeader { background-color: #0d47a1; color: white; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .header-row { display: flex; justify-content: space-between; width: 100%; align-items: center; }
+        #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 0.9em; }
+        #currentYearMonth { font-size: 1.2em; font-weight: bold; }
+        
+        #calendar td { height: 110px; vertical-align: top; width: 14.28%; }
+        #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
+        #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
+
+        #calendarContainer.hide-weekend #calendar th:nth-child(1),
+        #calendarContainer.hide-weekend #calendar td:nth-child(1),
+        #calendarContainer.hide-weekend #calendar th:nth-child(7),
+        #calendarContainer.hide-weekend #calendar td:nth-child(7) { display: none !important; }
 
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
         .golden-record { background-color: #0d47a1 !important; color: white !important; }
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
+
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
+        @media print { .no-print, .action-section, #calendarHeader button { display: none !important; } }
     </style>
 </head>
 <body>
 
     <h2>📊 金牛頓公司活動行事曆</h2>
 
-    <div id="calendarContainer">
+    <div id="calendarContainer" class="hide-weekend">
         <div id="calendarHeader">
             <div class="header-row">
                 <button onclick="changeMonth(-1)">◀ 上個月</button>
-                <span id="currentYearMonth"></span>
+                <span id="currentYearMonth">2026年 3月</span>
                 <button onclick="changeMonth(1)">下個月 ▶</button>
             </div>
             <div class="header-row" style="justify-content: center;">
@@ -61,7 +62,7 @@
     <div class="suggestion-display-box">
         <h3 style="margin-top:0; color: #e65100;">📋 公司活動建議內容</h3>
         <table id="suggestionTable">
-            <thead><tr><th>項目</th><th>建議詳情</th></tr></thead>
+            <thead><tr><th style="width:25%">項目</th><th style="width:75%">建議詳情</th></tr></thead>
             <tbody id="suggestionList"></tbody>
         </table>
     </div>
@@ -71,9 +72,10 @@
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
             <select id="queryNameSelect" style="min-width:150px; height:40px;"></select>
             <input type="date" id="queryStartDate"> 至 <input type="date" id="queryEndDate">
-            <button onclick="queryRecords()" style="height:40px; background:#007bff; color:white; border:none; padding:0 20px; cursor:pointer;">查詢</button>
-            <button onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; padding:0 15px; cursor:pointer;">📊 查詢匯出</button>
-            <button onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; padding:0 15px; cursor:pointer;">💾 儲存</button>
+            <button onclick="queryRecords()" style="height:40px; background:#007bff; color:white; border:none; padding:0 20px; border-radius:4px; cursor:pointer;">查詢</button>
+            <button onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
+            <button onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">💾 儲存</button>
+            <button onclick="window.print()" style="height:40px; background:#607d8b; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🖨️ 列印</button>
         </div>
     </div>
 
@@ -81,75 +83,133 @@
 
     <script>
         let currentDisplayDate = new Date();
-        let showWeekend = true;
         const SUGGEST_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=1793548004&single=true&output=csv';
         const GOOGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
         const nameList = ["全部人員", "金牛頓", "ERIC", "JAMES", "方順黌", "王冠峯", "余品橋", "李佩娟", "高欣宜", "陳秀燕", "陳品鈞", "陳靖昂", "陳慧真", "曾晨杰", "楊添仰", "詹淑敏", "戴政宏", "蘇威丞"];
 
-        let leaveRecords = [], suggestions = [];
+        let leaveRecords = [];
+        let suggestions = [];
 
         async function fetchData() {
-            const [resL, resS] = await Promise.all([fetch(GOOGLE_CSV_URL), fetch(SUGGEST_CSV_URL)]);
-            const dataL = await resL.text(), dataS = await resS.text();
-            leaveRecords = dataL.split('\n').slice(1).filter(r => r.trim() !== '').map(row => {
-                const c = row.split(',');
-                return { name: c[0], type: c[1], start: c[2], end: c[3], dur: c[4]||"整天", note: c[5]||'' };
-            });
-            suggestions = dataS.split('\n').slice(1).filter(r => r.trim() !== '').map(row => { const c = row.split(','); return { title: c[0], content: c[1] }; });
-            renderCalendar(); renderSuggestions();
+            try {
+                const resL = await fetch(GOOGLE_CSV_URL);
+                const dataL = await resL.text();
+                const rowsL = dataL.split('\n').slice(1);
+                leaveRecords = rowsL.filter(r => r.trim() !== '').map((row, index) => {
+                    const cols = row.split(',');
+                    const start = new Date(cols[2]);
+                    const end = new Date(cols[3]);
+                    const diffDays = (Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
+                    
+                    let val = diffDays;
+                    let durStr = cols[4] || "整天";
+                    if (durStr.includes("半天")) val = 0.5;
+                    else if (durStr.includes("小時")) val = parseFloat(durStr) / 8;
+                    
+                    return { id: Date.now() + index, name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: durStr, note: cols[5] || '', calcValue: val };
+                });
+
+                const resS = await fetch(SUGGEST_CSV_URL);
+                const dataS = await resS.text();
+                const rowsS = dataS.split('\n').slice(1);
+                suggestions = rowsS.filter(r => r.trim() !== '').map(row => {
+                    const cols = row.split(',');
+                    return { title: cols[0], content: cols[1] };
+                });
+                
+                renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
+                renderSuggestions();
+            } catch (e) { console.error("資料讀取失敗", e); }
         }
 
-        function renderCalendar() {
-            const tbody = document.querySelector('#calendar tbody');
-            const year = currentDisplayDate.getFullYear(), month = currentDisplayDate.getMonth() + 1;
+        function toggleWeekend() { document.getElementById('calendarContainer').classList.toggle('hide-weekend'); }
+
+        function queryRecords() {
+            const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
+            if (!s || !e) return alert("請選日期範圍後再執行查詢");
+            let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
+            res.sort((a, b) => a.start < b.start ? -1 : 1);
+            
+            let stats = {};
+            let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>時數/天數</th><th>說明/原因</th></tr></thead><tbody>`;
+            res.forEach(r => {
+                stats[r.type] = (stats[r.type] || 0) + r.calcValue;
+                h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red; font-weight:bold;">${r.displayDuration}</td><td style="text-align:left;">${r.note}</td></tr>`;
+            });
+            
+            if (res.length > 0) {
+                let stText = Object.keys(stats).map(k => `${k}: ${stats[k].toFixed(2)}天`).join(' | ');
+                h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${stText}</td></tr>`;
+            } else { h += `<tr><td colspan="6">此範圍內查無資料</td></tr>`; }
+            document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
+        }
+
+        function exportToExcel() {
+            const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
+            if (!s || !e) return alert("請先選取日期範圍並執行查詢後再匯出");
+            let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
+            if (res.length === 0) return alert("目前查詢範圍內無資料可匯出");
+            let csvContent = "\ufeff姓名,事別,開始日期,結束日期,時數/天數,說明/原因\n";
+            res.forEach(r => { csvContent += `${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note.replace(/,/g, "，")}\n`; });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `金牛頓查詢紀錄_${s}_至_${e}.csv`;
+            link.click();
+        }
+
+        function renderCalendar(year, month) {
+            const calendarEl = document.getElementById('calendar');
             document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
-            tbody.innerHTML = '';
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            let html = '<thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody>';
             const firstDay = new Date(year, month - 1, 1).getDay(), lastDate = new Date(year, month, 0).getDate();
-            let date = 1, html = '';
+            let date = 1;
             for (let i = 0; i < 6; i++) {
                 let row = '<tr>';
                 for (let j = 0; j < 7; j++) {
-                    if ((i === 0 && j < firstDay) || date > lastDate) { row += '<td></td>'; } 
+                    if ((i === 0 && j < firstDay) || date > lastDate) { row += '<td style="background:#f9f9f9;"></td>'; } 
                     else {
-                        if (showWeekend || (j !== 0 && j !== 6)) {
-                            const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
-                            row += `<td><div class="date-number">${date}</div>`;
-                            leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                                let tc = (r.name==='金牛頓')?'golden-record':(r.type==='活動'?'activity-record':(r.type==='假期'?'holiday-record':'leave-record'));
-                                row += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
-                            });
-                            row += `</td>`;
-                        }
-                        date++;
+                        const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
+                        const isToday = (ds === todayStr);
+                        row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}"><div style="font-weight:bold;text-align:right;">${date}</div>`;
+                        leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
+                            let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
+                            row += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
+                        });
+                        row += `</td>`; date++;
                     }
                 }
                 html += row + '</tr>'; if (date > lastDate && i >= 4) break; 
             }
-            tbody.innerHTML = html;
+            calendarEl.innerHTML = html + '</tbody>';
         }
 
-        function queryRecords() {
-            const qN = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
-            if(!s||!e) return alert("請選日期");
-            let res = leaveRecords.filter(r => ((r.start>=s&&r.start<=e)||(r.end>=s&&r.end<=e))&&(qN==="全部人員"||r.name===qN));
-            let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>開始</th><th>結束</th><th>時數</th><th>說明</th></tr></thead><tbody>`;
-            res.forEach(r => h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td>${r.dur}</td><td>${r.note}</td></tr>`);
-            document.getElementById('queryResultArea').innerHTML = res.length ? h+'</tbody></table>' : '無資料';
+        function renderSuggestions() {
+            document.getElementById('suggestionList').innerHTML = suggestions.map(s => {
+                return `<tr><td style="font-weight:bold;">${s.title}</td><td style="text-align:left; white-space:pre-wrap;">${s.content}</td></tr>`;
+            }).join('');
         }
 
-        function exportToExcel() {
-            const qN=document.getElementById('queryNameSelect').value, s=document.getElementById('queryStartDate').value, e=document.getElementById('queryEndDate').value;
-            if(!s||!e) return alert("先查詢");
-            let res=leaveRecords.filter(r=>((r.start>=s&&r.start<=e)||(r.end>=s&&r.end<=e))&&(qN==="全部人員"||r.name===qN));
-            let csv="\ufeff姓名,事別,開始,結束,時數,說明\n"+res.map(r=>`${r.name},${r.type},${r.start},${r.end},${r.dur},${r.note}`).join('\n');
-            const link=document.createElement("a"); link.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); link.download="查詢.csv"; link.click();
+        function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); }
+        
+        function saveFullHTML() {
+            const queryArea = document.getElementById('queryResultArea');
+            const originalContent = queryArea.innerHTML;
+            queryArea.innerHTML = "";
+            const blob = new Blob(['<!DOCTYPE html>\n' + document.documentElement.outerHTML], { type: 'text/html' });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `金牛頓行事曆_${new Date().toISOString().split('T')[0]}.html`;
+            a.click();
+            queryArea.innerHTML = originalContent;
         }
 
-        function toggleWeekend() { showWeekend = !showWeekend; renderCalendar(); }
-        function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth()+d); renderCalendar(); }
-        function renderSuggestions() { document.getElementById('suggestionList').innerHTML = suggestions.map(s => `<tr><td style="font-weight:bold;">${s.title}</td><td>${s.content}</td></tr>`).join(''); }
-        function saveFullHTML() { const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([document.documentElement.outerHTML],{type:'text/html'})); a.download="行事曆.html"; a.click(); }
-        document.addEventListener('DOMContentLoaded', () => { nameList.forEach(n => document.getElementById('queryNameSelect').add(new Option(n, n))); fetchData(); });
+        document.addEventListener('DOMContentLoaded', () => {
+            const qSel = document.getElementById('queryNameSelect');
+            nameList.forEach(n => qSel.add(new Option(n, n)));
+            fetchData(); 
+        });
     </script>
-</body>
-</html>
+</body></html>
