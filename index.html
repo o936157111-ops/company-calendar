@@ -18,18 +18,13 @@
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 0.6em; }
         
-        /* 手機 RWD 優化：僅調整顯示模式，不更動 HTML 結構 */
-        @media (max-width: 600px) {
-            #calendarContainer { overflow-x: auto; }
-            #calendar { min-width: 800px; }
-        }
-
         #calendar td { height: 110px; vertical-align: top; width: 14.28%; }
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
-        .hide-weekend #calendar th:nth-child(1), .hide-weekend #calendar td:nth-child(1),
-        .hide-weekend #calendar th:nth-child(7), .hide-weekend #calendar td:nth-child(7) { display: none !important; }
+        /* 隱藏週末欄位 */
+        .hide-sun th:nth-child(1), .hide-sun td:nth-child(1) { display: none !important; }
+        .hide-sat th:nth-child(7), .hide-sat td:nth-child(7) { display: none !important; }
 
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
@@ -45,7 +40,7 @@
 
     <h2>📊 金牛頓公司活動行事曆</h2>
 
-    <div id="calendarContainer" class="hide-weekend">
+    <div id="calendarContainer">
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
             <span id="currentYearMonth">2026年 3月</span>
@@ -129,7 +124,6 @@
             } catch (e) { console.error("資料讀取失敗", e); }
         }
 
-        // 按鈕邏輯
         function toggleSun() { document.getElementById('calendarContainer').classList.toggle('hide-sun'); }
         function toggleSat() { document.getElementById('calendarContainer').classList.toggle('hide-sat'); }
         function toggleAllWeekend() { 
@@ -193,7 +187,7 @@
                     else {
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
                         const isToday = (ds === todayStr);
-                        row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}"><div style="font-weight:bold;text-align:right;">${date}</div>`;
+                        row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}"><div style="font-weight:bold;text-align:center;">${date}</div>`;
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                             let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
                             row += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
