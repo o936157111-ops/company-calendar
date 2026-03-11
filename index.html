@@ -22,13 +22,24 @@
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
-        .hide-sun #calendar th:nth-child(1), .hide-sun #calendar td:nth-child(1),
+        /* 週末顯示/隱藏控制 */
+        .hide-sun #calendar th:nth-child(1), .hide-sun #calendar td:nth-child(1) { display: none !important; }
         .hide-sat #calendar th:nth-child(7), .hide-sat #calendar td:nth-child(7) { display: none !important; }
 
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
         .golden-record { background-color: #0d47a1 !important; color: white !important; }
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
+
+        /* 手機卡片式設計 */
+        #mobileCards { display: none; padding: 10px; background: #f1f3f4; }
+        @media (max-width: 600px) {
+            #calendar { display: none !important; }
+            #mobileCards { display: block; }
+            .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+            .card-date { font-weight: bold; color: #0d47a1; border-bottom: 2px solid #e3f2fd; margin-bottom: 8px; font-size: 1.1em; display: flex; justify-content: space-between; }
+            .card-weekend { color: #d32f2f; } /* 週末在手機版標紅 */
+        }
 
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
@@ -55,8 +66,9 @@
                     <th>六</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody id="calendarBody"></tbody>
         </table>
+        <div id="mobileCards"></div>
     </div>
 
     <div class="suggestion-display-box">
@@ -121,7 +133,6 @@
 
         function toggleSun() { document.getElementById('calendarContainer').classList.toggle('hide-sun'); }
         function toggleSat() { document.getElementById('calendarContainer').classList.toggle('hide-sat'); }
-        
         function toggleAllWeekend() { 
             const el = document.getElementById('calendarContainer');
             const isHidden = el.classList.contains('hide-sun') || el.classList.contains('hide-sat');
@@ -129,19 +140,18 @@
             else { el.classList.add('hide-sun'); el.classList.add('hide-sat'); }
         }
 
+        // --- 完整保留查詢功能 ---
         function queryRecords() {
             const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
             if (!s || !e) return alert("請選日期範圍後再執行查詢");
             let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
             res.sort((a, b) => a.start < b.start ? -1 : 1);
-            
             let stats = {};
             let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>時數/天數</th><th>說明/原因</th></tr></thead><tbody>`;
             res.forEach(r => {
                 stats[r.type] = (stats[r.type] || 0) + r.calcValue;
                 h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red; font-weight:bold;">${r.displayDuration}</td><td style="text-align:left;">${r.note}</td></tr>`;
             });
-            
             if (res.length > 0) {
                 let stText = Object.keys(stats).map(k => `${k}: ${stats[k].toFixed(2)}天`).join(' | ');
                 h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${stText}</td></tr>`;
@@ -151,44 +161,70 @@
 
         function exportToExcel() {
             const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
-            if (!s || !e) return alert("請先選取日期範圍並執行查詢後再匯出");
+            if (!s || !e) return alert("請選日期範圍並執行查詢");
             let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
-            if (res.length === 0) return alert("目前查詢範圍內無資料可匯出");
-            let csvContent = "\ufeff姓名,事別,開始日期,結束日期,時數/天數,說明/原因\n";
-            res.forEach(r => { csvContent += `${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note.replace(/,/g, "，")}\n`; });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            let csv = "\ufeff姓名,事別,開始日期,結束日期,時數/天數,說明/原因\n";
+            res.forEach(r => { csv += `${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note}\n`; });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `金牛頓查詢紀錄_${s}_至_${e}.csv`;
+            link.download = `金牛頓匯出_${s}_${e}.csv`;
             link.click();
         }
 
         function renderCalendar(year, month) {
-            const calendarEl = document.getElementById('calendar');
+            const tbody = document.getElementById('calendarBody');
+            const mobileCardsEl = document.getElementById('mobileCards');
             document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
             const today = new Date();
             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            let html = `<thead><tr><th>日</th><th><button onclick="toggleSun()" style="cursor:pointer; margin-right:5px;">◀</button>一</th><th>二</th><th>三</th><th>四</th><th>五<button onclick="toggleSat()" style="cursor:pointer; margin-left:5px;">▶</button></th><th>六</th></tr></thead><tbody>`;
-            const firstDay = new Date(year, month - 1, 1).getDay(), lastDate = new Date(year, month, 0).getDate();
+            
+            let html = '';
+            let cardsHtml = '';
+            
+            const firstDay = new Date(year, month - 1, 1).getDay();
+            const lastDate = new Date(year, month, 0).getDate();
+            const weekDays = ['日','一','二','三','四','五','六'];
             let date = 1;
+
             for (let i = 0; i < 6; i++) {
                 let row = '<tr>';
                 for (let j = 0; j < 7; j++) {
-                    if ((i === 0 && j < firstDay) || date > lastDate) { row += '<td style="background:#f9f9f9;"></td>'; } 
-                    else {
+                    if ((i === 0 && j < firstDay) || date > lastDate) {
+                        row += '<td style="background:#f9f9f9;"></td>';
+                    } else {
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
                         const isToday = (ds === todayStr);
-                        row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}"><div style="font-weight:bold;text-align:right;">${date}</div>`;
-                        leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
-                            let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
-                            row += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
-                        });
-                        row += `</td>`; date++;
+                        const records = leaveRecords.filter(r => ds >= r.start && ds <= r.end);
+                        
+                        // 電腦版 TD
+                        row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}">
+                            <div style="font-weight:bold;text-align:right;">${date}</div>
+                            ${records.map(r => {
+                                let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
+                                return `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
+                            }).join('')}
+                        </td>`;
+                        
+                        // 手機版 Card (1號到月底，正確對應星期)
+                        cardsHtml += `<div class="card">
+                            <div class="card-date">
+                                <span>${month}月${date}日</span>
+                                <span class="${(j===0||j===6)?'card-weekend':''}">(週${weekDays[j]})</span>
+                            </div>
+                            ${records.length > 0 ? records.map(r => {
+                                let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
+                                return `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
+                            }).join('') : '<div style="color:#ccc; font-size:0.8em;">暫無活動</div>'}
+                        </div>`;
+                        date++;
                     }
                 }
-                html += row + '</tr>'; if (date > lastDate && i >= 4) break; 
+                html += row + '</tr>';
+                if (date > lastDate) break;
             }
-            calendarEl.innerHTML = html + '</tbody>';
+            tbody.innerHTML = html;
+            mobileCardsEl.innerHTML = cardsHtml;
         }
 
         function renderSuggestions() {
