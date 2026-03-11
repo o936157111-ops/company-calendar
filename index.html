@@ -20,13 +20,11 @@
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 0.6em; }
         
-        /* 年份月份並排設定 */
-        #currentYearMonth { display: flex; flex-direction: row; gap: 8px; align-items: center; }
-
         #calendar td { height: 110px; vertical-align: top; width: 14.28%; }
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
+        /* 動態隱藏邏輯 */
         #calendarContainer.hide-sun th:nth-child(1), #calendarContainer.hide-sun td:nth-child(1) { display: none !important; }
         #calendarContainer.hide-sat th:nth-child(7), #calendarContainer.hide-sat td:nth-child(7) { display: none !important; }
 
@@ -35,16 +33,13 @@
         .golden-record { background-color: #0d47a1 !important; color: white !important; }
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
 
-        /* 手機版響應式設定 */
+        /* 手機版卡片式佈局 (寬度小於 768px) */
         @media screen and (max-width: 768px) {
-            #currentYearMonth { flex-direction: column; gap: 0; line-height: 1.2; }
-            #currentYearMonth .year-text { font-size: 0.7em; }
-            
             table, thead, tbody, th, td, tr { display: block; }
             thead { display: none; }
-            #calendar td { width: 100% !important; height: auto !important; margin-bottom: 10px; border: 1px solid #dee2e6; text-align: left; }
+            #calendar td { width: 100%; height: auto !important; margin-bottom: 10px; border: 1px solid #dee2e6; text-align: left; }
             #calendar td div:first-child { font-weight: bold; font-size: 1.1em; border-bottom: 1px solid #eee; margin-bottom: 5px; }
-            .toggle-col-btn { display: none; }
+            .toggle-col-btn { display: none; } /* 手機版隱藏三角形按鈕，避免排版混亂 */
         }
 
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
@@ -59,10 +54,7 @@
     <div id="calendarContainer">
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
-            <div id="currentYearMonth">
-                <span class="year-text">2026年</span>
-                <span class="month-text">3月</span>
-            </div>
+            <span id="currentYearMonth">2026年 3月</span>
             <button onclick="changeMonth(1)">下個月 ▶</button>
         </div>
         <table id="calendar">
@@ -119,10 +111,12 @@
             try {
                 const resL = await fetch(GOOGLE_CSV_URL);
                 const dataL = await resL.text();
-                leaveRecords = dataL.split('\n').slice(1).filter(r => r.trim() !== '').map((row, index) => {
+                const rowsL = dataL.split('\n').slice(1);
+                leaveRecords = rowsL.filter(r => r.trim() !== '').map((row, index) => {
                     const cols = row.split(',');
                     return { id: Date.now() + index, name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: cols[4] || "整天", note: cols[5] || '' };
                 });
+
                 const resS = await fetch(SUGGEST_CSV_URL);
                 const dataS = await resS.text();
                 suggestions = dataS.split('\n').slice(1).filter(r => r.trim() !== '').map(row => { const c = row.split(','); return { title: c[0], content: c[1] }; });
@@ -133,10 +127,7 @@
 
         function renderCalendar(year, month) {
             const calendarEl = document.getElementById('calendar');
-            // 更新年份與月份顯示
-            document.querySelector('.year-text').textContent = `${year}年`;
-            document.querySelector('.month-text').textContent = `${month}月`;
-            
+            document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
             let html = '<thead><tr><th>日 <button class="toggle-col-btn" onclick="toggleColumn(\'hide-sun\')">◀</button></th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六 <button class="toggle-col-btn" onclick="toggleColumn(\'hide-sat\')">▶</button></th></tr></thead><tbody>';
             const firstDay = new Date(year, month - 1, 1).getDay(), lastDate = new Date(year, month, 0).getDate();
             let date = 1;
