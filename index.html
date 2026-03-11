@@ -4,6 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>金牛頓公司活動行事曆</title>
     <style>
+        /* --- 電腦版樣式：完全保持不動 --- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
         
@@ -22,27 +23,42 @@
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
-        /* 週末顯示/隱藏控制 */
-        .hide-sun #calendar th:nth-child(1), .hide-sun #calendar td:nth-child(1) { display: none !important; }
-        .hide-sat #calendar th:nth-child(7), .hide-sat #calendar td:nth-child(7) { display: none !important; }
+        .hide-sun th:nth-child(1), .hide-sun td:nth-child(1) { display: none !important; }
+        .hide-sat th:nth-child(7), .hide-sat td:nth-child(7) { display: none !important; }
 
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
         .golden-record { background-color: #0d47a1 !important; color: white !important; }
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
 
-        /* 手機卡片式設計 */
+        .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
+        .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
+
+        /* --- 手機版專屬修正區 (只在螢幕 600px 以下生效) --- */
         #mobileCards { display: none; padding: 10px; background: #f1f3f4; }
+        
         @media (max-width: 600px) {
             #calendar { display: none !important; }
             #mobileCards { display: block; }
+            
+            /* 針對手機標題的文字縮小，使其排在同一列 */
+            #currentYearMonth { 
+                font-size: 0.8em !important; /* 縮小文字 */
+                white-space: nowrap !important; /* 強制不換行 */
+                margin: 0 5px; 
+            }
+            #calendarHeader {
+                padding: 10px 5px !important; /* 稍微縮小內距釋放空間 */
+            }
+            #calendarHeader button {
+                padding: 5px 8px !important; /* 稍微縮小按鈕 */
+            }
+
             .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
             .card-date { font-weight: bold; color: #0d47a1; border-bottom: 2px solid #e3f2fd; margin-bottom: 8px; font-size: 1.1em; display: flex; justify-content: space-between; }
-            .card-weekend { color: #d32f2f; } /* 週末在手機版標紅 */
+            .card-weekend { color: #d32f2f; }
         }
 
-        .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
-        .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
         @media print { .no-print, .action-section, #calendarHeader button { display: none !important; } }
     </style>
 </head>
@@ -135,12 +151,10 @@
         function toggleSat() { document.getElementById('calendarContainer').classList.toggle('hide-sat'); }
         function toggleAllWeekend() { 
             const el = document.getElementById('calendarContainer');
-            const isHidden = el.classList.contains('hide-sun') || el.classList.contains('hide-sat');
-            if (isHidden) { el.classList.remove('hide-sun'); el.classList.remove('hide-sat'); } 
-            else { el.classList.add('hide-sun'); el.classList.add('hide-sat'); }
+            el.classList.toggle('hide-sun');
+            el.classList.toggle('hide-sat');
         }
 
-        // --- 完整保留查詢功能 ---
         function queryRecords() {
             const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
             if (!s || !e) return alert("請選日期範圍後再執行查詢");
@@ -161,14 +175,15 @@
 
         function exportToExcel() {
             const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
-            if (!s || !e) return alert("請選日期範圍並執行查詢");
+            if (!s || !e) return alert("請先選取日期範圍並執行查詢後再匯出");
             let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
-            let csv = "\ufeff姓名,事別,開始日期,結束日期,時數/天數,說明/原因\n";
-            res.forEach(r => { csv += `${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note}\n`; });
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            if (res.length === 0) return alert("目前查詢範圍內無資料可匯出");
+            let csvContent = "\ufeff姓名,事別,開始日期,結束日期,時數/天數,說明/原因\n";
+            res.forEach(r => { csvContent += `${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note.replace(/,/g, "，")}\n`; });
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = `金牛頓匯出_${s}_${e}.csv`;
+            link.download = `金牛頓查詢紀錄_${s}_至_${e}.csv`;
             link.click();
         }
 
@@ -197,16 +212,14 @@
                         const isToday = (ds === todayStr);
                         const records = leaveRecords.filter(r => ds >= r.start && ds <= r.end);
                         
-                        // 電腦版 TD
                         row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}">
-                            <div style="font-weight:bold;text-align:right;">${date}</div>
+                            <div style="font-weight:bold;text-align:center;">${date}</div>
                             ${records.map(r => {
                                 let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
                                 return `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
                             }).join('')}
                         </td>`;
                         
-                        // 手機版 Card (1號到月底，正確對應星期)
                         cardsHtml += `<div class="card">
                             <div class="card-date">
                                 <span>${month}月${date}日</span>
