@@ -14,7 +14,6 @@
         th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
         th { background-color: #e3f2fd; color: #0d47a1; position: relative; }
         
-        /* 隱藏週末控制按鈕 */
         .toggle-col-btn { background: none; border: 1px solid #999; cursor: pointer; font-size: 8px; color: #0d47a1; margin: 0 2px; padding: 0 4px; vertical-align: middle; border-radius: 3px; }
 
         #calendarContainer { margin-top: 30px; border: 1px solid #0d47a1; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; background: white; }
@@ -33,6 +32,15 @@
         .activity-record { background-color: #673ab7 !important; color: white !important; }
         .golden-record { background-color: #0d47a1 !important; color: white !important; }
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
+
+        /* 手機版卡片式佈局 (寬度小於 768px) */
+        @media screen and (max-width: 768px) {
+            table, thead, tbody, th, td, tr { display: block; }
+            thead { display: none; }
+            #calendar td { width: 100%; height: auto !important; margin-bottom: 10px; border: 1px solid #dee2e6; text-align: left; }
+            #calendar td div:first-child { font-weight: bold; font-size: 1.1em; border-bottom: 1px solid #eee; margin-bottom: 5px; }
+            .toggle-col-btn { display: none; } /* 手機版隱藏三角形按鈕，避免排版混亂 */
+        }
 
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
@@ -92,7 +100,6 @@
 
         let leaveRecords = [], suggestions = [];
 
-        // 新增的獨立切換函數
         function toggleColumn(className) { document.getElementById('calendarContainer').classList.toggle(className); }
         function toggleAllWeekend() { 
             const el = document.getElementById('calendarContainer');
@@ -107,70 +114,20 @@
                 const rowsL = dataL.split('\n').slice(1);
                 leaveRecords = rowsL.filter(r => r.trim() !== '').map((row, index) => {
                     const cols = row.split(',');
-                    const start = new Date(cols[2]);
-                    const end = new Date(cols[3]);
-                    const diffDays = (Math.abs(end - start) / (1000 * 60 * 60 * 24)) + 1;
-                    
-                    let val = diffDays;
-                    let durStr = cols[4] || "整天";
-                    if (durStr.includes("半天")) val = 0.5;
-                    else if (durStr.includes("小時")) val = parseFloat(durStr) / 8;
-                    
-                    return { id: Date.now() + index, name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: durStr, note: cols[5] || '', calcValue: val };
+                    return { id: Date.now() + index, name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: cols[4] || "整天", note: cols[5] || '' };
                 });
 
                 const resS = await fetch(SUGGEST_CSV_URL);
                 const dataS = await resS.text();
-                const rowsS = dataS.split('\n').slice(1);
-                suggestions = rowsS.filter(r => r.trim() !== '').map(row => {
-                    const cols = row.split(',');
-                    return { title: cols[0], content: cols[1] };
-                });
-                
+                suggestions = dataS.split('\n').slice(1).filter(r => r.trim() !== '').map(row => { const c = row.split(','); return { title: c[0], content: c[1] }; });
                 renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1);
                 renderSuggestions();
-            } catch (e) { console.error("資料讀取失敗", e); }
-        }
-
-        function queryRecords() {
-            const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
-            if (!s || !e) return alert("請選日期範圍後再執行查詢");
-            let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
-            res.sort((a, b) => a.start < b.start ? -1 : 1);
-            
-            let stats = {};
-            let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>開始日期</th><th>結束日期</th><th>時數/天數</th><th>說明/原因</th></tr></thead><tbody>`;
-            res.forEach(r => {
-                stats[r.type] = (stats[r.type] || 0) + r.calcValue;
-                h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.start}</td><td>${r.end}</td><td style="color:red; font-weight:bold;">${r.displayDuration}</td><td style="text-align:left;">${r.note}</td></tr>`;
-            });
-            
-            if (res.length > 0) {
-                let stText = Object.keys(stats).map(k => `${k}: ${stats[k].toFixed(2)}天`).join(' | ');
-                h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${stText}</td></tr>`;
-            } else { h += `<tr><td colspan="6">此範圍內查無資料</td></tr>`; }
-            document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
-        }
-
-        function exportToExcel() {
-            const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
-            if (!s || !e) return alert("請先選取日期範圍並執行查詢後再匯出");
-            let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
-            if (res.length === 0) return alert("目前查詢範圍內無資料可匯出");
-            let csvContent = "\ufeff姓名,事別,開始日期,結束日期,時數/天數,說明/原因\n";
-            res.forEach(r => { csvContent += `${r.name},${r.type},${r.start},${r.end},${r.displayDuration},${r.note.replace(/,/g, "，")}\n`; });
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = `金牛頓查詢紀錄_${s}_至_${e}.csv`;
-            link.click();
+            } catch (e) { console.error(e); }
         }
 
         function renderCalendar(year, month) {
             const calendarEl = document.getElementById('calendar');
             document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
-            const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             let html = '<thead><tr><th>日 <button class="toggle-col-btn" onclick="toggleColumn(\'hide-sun\')">◀</button></th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六 <button class="toggle-col-btn" onclick="toggleColumn(\'hide-sat\')">▶</button></th></tr></thead><tbody>';
             const firstDay = new Date(year, month - 1, 1).getDay(), lastDate = new Date(year, month, 0).getDate();
             let date = 1;
@@ -180,8 +137,7 @@
                     if ((i === 0 && j < firstDay) || date > lastDate) { row += '<td style="background:#f9f9f9;"></td>'; } 
                     else {
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
-                        const isToday = (ds === todayStr);
-                        row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}"><div style="font-weight:bold;text-align:right;">${date}</div>`;
+                        row += `<td><div>${date}</div>`;
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                             let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
                             row += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
@@ -195,9 +151,7 @@
         }
 
         function renderSuggestions() {
-            document.getElementById('suggestionList').innerHTML = suggestions.map(s => {
-                return `<tr><td style="font-weight:bold;">${s.title}</td><td style="text-align:left; white-space:pre-wrap;">${s.content}</td></tr>`;
-            }).join('');
+            document.getElementById('suggestionList').innerHTML = suggestions.map(s => `<tr><td style="font-weight:bold;">${s.title}</td><td style="text-align:left; white-space:pre-wrap;">${s.content}</td></tr>`).join('');
         }
 
         function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); }
@@ -215,8 +169,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const qSel = document.getElementById('queryNameSelect');
-            nameList.forEach(n => qSel.add(new Option(n, n)));
+            nameList.forEach(n => document.getElementById('queryNameSelect').add(new Option(n, n)));
             fetchData(); 
         });
     </script>
