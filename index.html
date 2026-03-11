@@ -46,10 +46,7 @@
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
             <span id="currentYearMonth">2026年 3月</span>
-            <div>
-                <button onclick="toggleWeekend()">隱藏/顯示週末</button>
-                <button onclick="changeMonth(1)">下個月 ▶</button>
-            </div>
+            <button onclick="changeMonth(1)">下個月 ▶</button>
         </div>
         <table id="calendar"><thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody></tbody></table>
     </div>
@@ -71,6 +68,7 @@
             <button onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
             <button onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">💾 儲存</button>
             <button onclick="window.print()" style="height:40px; background:#607d8b; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🖨️ 列印</button>
+            <button onclick="toggleWeekend()" style="height:40px; background:#455a64; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🗓️ 顯示/隱藏週末</button>
         </div>
     </div>
 
