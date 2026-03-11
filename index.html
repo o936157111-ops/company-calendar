@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>金牛頓公司活動行事曆</title>
     <style>
-        /* --- 電腦版樣式：完全保持不動 --- */
+        /* --- 電腦版通用樣式 --- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
         
@@ -34,12 +34,16 @@
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
 
-        /* --- 手機版專屬修正區 --- */
-        #mobileCards { display: none; padding: 10px; background: #f1f3f4; }
-        
+        /* --- 裝置適應區：精準分開電腦版與手機版 --- */
+        @media (min-width: 601px) {
+            .action-row { display: flex !important; flex-direction: row !important; flex-wrap: wrap !important; gap: 10px !important; align-items: center; }
+            .row-group { display: flex !important; gap: 5px !important; }
+        }
+
         @media (max-width: 600px) {
             #calendar { display: none !important; }
             #mobileCards { display: block; }
+            #mobileCards { padding: 10px; background: #f1f3f4; }
             
             #currentYearMonth { font-size: 0.8em !important; white-space: nowrap !important; margin: 0 5px; }
             #calendarHeader { padding: 10px 5px !important; }
@@ -49,9 +53,9 @@
             .card-date { font-weight: bold; color: #0d47a1; border-bottom: 2px solid #e3f2fd; margin-bottom: 8px; font-size: 1.1em; display: flex; justify-content: space-between; }
             .card-weekend { color: #d32f2f; }
 
-            /* 新增的四列式排版 */
-            .action-row { display: flex; flex-direction: column; gap: 8px; }
-            .row-group { display: flex; gap: 5px; width: 100%; }
+            /* 手機版：強制縱向排列 */
+            .action-row { display: flex !important; flex-direction: column !important; gap: 8px !important; }
+            .row-group { display: flex !important; gap: 5px !important; width: 100% !important; }
             .row-group button, .row-group select, .row-group input { flex: 1; height: 40px; box-sizing: border-box; }
         }
 
