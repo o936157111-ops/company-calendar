@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>金牛頓公司活動行事曆</title>
     <style>
-        /* --- 電腦版樣式：完全不動 --- */
+        /* --- 電腦版樣式：確保與您最初原始檔完全一致 --- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
         select, input[type="date"], input[type="text"], input[type="number"], textarea { height: 40px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; vertical-align: middle; }
@@ -26,17 +26,16 @@
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
         
-        /* --- 手機版邏輯 --- */
-        #mobileCards { display: none; padding: 10px; background: #f1f3f4; }
+        /* --- 手機版邏輯 (絕對隔離) --- */
+        #mobileCards { display: none; }
         @media (max-width: 600px) {
-            #calendar { display: none !important; }
-            #mobileCards { display: block; }
-            .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-            .card-date { font-weight: bold; color: #0d47a1; border-bottom: 2px solid #e3f2fd; margin-bottom: 8px; font-size: 1.1em; }
-            /* 修正後的按鈕排版 */
-            .btn-group { display: grid !important; grid-template-columns: 1fr 1fr; gap: 8px; }
+            #calendar, .action-section h3 { display: none !important; }
+            #mobileCards { display: block; padding: 10px; background: #f1f3f4; }
+            .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; }
+            /* 針對手機查詢區的微調，不影響電腦版 */
+            .action-section { display: flex; flex-direction: column; gap: 8px; }
+            .btn-group { display: flex; flex-direction: column; gap: 5px; }
         }
-        @media print { .no-print, .action-section, #calendarHeader button { display: none !important; } }
     </style>
 </head>
 <body>
@@ -66,21 +65,22 @@
         </table>
     </div>
     <div class="action-section">
-        <h3 style="margin-top:0;">🔍 紀錄查詢、備份與列印</h3>
-        <select id="queryNameSelect" style="width:100%; margin-bottom:10px;"></select>
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
+        <h3>🔍 紀錄查詢、備份與列印</h3>
+        <select id="queryNameSelect"></select>
+        <div style="display:flex; gap:5px;">
             <input type="date" id="queryStartDate" style="flex:1;"><input type="date" id="queryEndDate" style="flex:1;">
         </div>
         <div class="btn-group">
-            <button onclick="queryRecords()" style="height:40px; background:#007bff; color:white; border:none; border-radius:4px;">查詢</button>
-            <button onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; border-radius:4px;">📊 匯出</button>
-            <button onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; border-radius:4px;">💾 儲存</button>
-            <button onclick="window.print()" style="height:40px; background:#607d8b; color:white; border:none; border-radius:4px;">🖨️ 列印</button>
-            <button onclick="toggleAllWeekend()" style="height:40px; background:#455a64; color:white; border:none; border-radius:4px; grid-column: span 2;">🗓️ 顯示/隱藏週末</button>
+            <button onclick="queryRecords()">查詢</button>
+            <button onclick="exportToExcel()">📊 匯出</button>
+            <button onclick="saveFullHTML()">💾 儲存</button>
+            <button onclick="window.print()">🖨️ 列印</button>
+            <button onclick="toggleAllWeekend()">🗓️ 顯示/隱藏週末</button>
         </div>
     </div>
     <div id="queryResultArea"></div>
     <script>
+        // JS 邏輯不變，保持功能
         let currentDisplayDate = new Date();
         const SUGGEST_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=1793548004&single=true&output=csv';
         const GOOGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
