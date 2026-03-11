@@ -18,23 +18,13 @@
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 0.6em; }
         
-        /* 手機 RWD 優化 */
-        @media (max-width: 600px) {
-            #calendarHeader { flex-direction: column; gap: 10px; font-size: 1.2em; }
-            #calendarContainer { overflow-x: auto; } /* 讓表格可水平滑動 */
-            #calendar { min-width: 600px; } /* 確保表格不被壓扁 */
-            .leave-record { font-size: 0.75em; padding: 2px; }
-        }
-
         #calendar td { height: 110px; vertical-align: top; width: 14.28%; }
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
-        /* 隱藏週末樣式 */
-        #calendarContainer.hide-weekend #calendar th:nth-child(1),
-        #calendarContainer.hide-weekend #calendar td:nth-child(1),
-        #calendarContainer.hide-weekend #calendar th:nth-child(7),
-        #calendarContainer.hide-weekend #calendar td:nth-child(7) { display: none !important; }
+        /* 隱藏週末欄位 */
+        .hide-sun th:nth-child(1), .hide-sun td:nth-child(1) { display: none !important; }
+        .hide-sat th:nth-child(7), .hide-sat td:nth-child(7) { display: none !important; }
 
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
@@ -50,15 +40,24 @@
 
     <h2>📊 金牛頓公司活動行事曆</h2>
 
-    <div id="calendarContainer" class="hide-weekend">
+    <div id="calendarContainer">
         <div id="calendarHeader">
             <button onclick="changeMonth(-1)">◀ 上個月</button>
-            <span id="currentYearMonth" style="display: flex; flex-direction: column; align-items: center;">
-                <span>2026年</span><span>3月</span>
-            </span>
+            <span id="currentYearMonth">2026年 3月</span>
             <button onclick="changeMonth(1)">下個月 ▶</button>
         </div>
-        <table id="calendar"><thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody></tbody></table>
+        <table id="calendar">
+            <thead>
+                <tr>
+                    <th>日</th>
+                    <th><button onclick="toggleSun()" style="cursor:pointer; margin-right:5px;">◀</button>一</th>
+                    <th>二</th><th>三</th><th>四</th>
+                    <th>五<button onclick="toggleSat()" style="cursor:pointer; margin-left:5px;">▶</button></th>
+                    <th>六</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <div class="suggestion-display-box">
@@ -78,14 +77,13 @@
             <button onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
             <button onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">💾 儲存</button>
             <button onclick="window.print()" style="height:40px; background:#607d8b; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🖨️ 列印</button>
-            <button onclick="toggleWeekend()" style="height:40px; background:#455a64; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🗓️ 顯示/隱藏週末</button>
+            <button onclick="toggleAllWeekend()" style="height:40px; background:#455a64; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🗓️ 顯示/隱藏週末</button>
         </div>
     </div>
 
     <div id="queryResultArea"></div>
 
     <script>
-        // (JavaScript 邏輯完全保留)
         let currentDisplayDate = new Date();
         const SUGGEST_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=1793548004&single=true&output=csv';
         const GOOGLE_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSk18e6JMlqZrTZkMdMybrvXSX-HuZ5vLTawqbU116-Xwd9DHUf25hAjOO7HxQ6mJ6E6K0ll8Eu-Iy8/pub?gid=0&single=true&output=csv';
@@ -126,7 +124,13 @@
             } catch (e) { console.error("資料讀取失敗", e); }
         }
 
-        function toggleWeekend() { document.getElementById('calendarContainer').classList.toggle('hide-weekend'); }
+        function toggleSun() { document.getElementById('calendarContainer').classList.toggle('hide-sun'); }
+        function toggleSat() { document.getElementById('calendarContainer').classList.toggle('hide-sat'); }
+        function toggleAllWeekend() { 
+            const el = document.getElementById('calendarContainer');
+            el.classList.toggle('hide-sun');
+            el.classList.toggle('hide-sat');
+        }
 
         function queryRecords() {
             const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
@@ -164,10 +168,16 @@
 
         function renderCalendar(year, month) {
             const calendarEl = document.getElementById('calendar');
-            document.getElementById('currentYearMonth').innerHTML = `<span>${year}年</span><span>${month}月</span>`;
+            document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
             const today = new Date();
             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            let html = '<thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody>';
+            let html = `<thead><tr>
+                <th>日</th>
+                <th><button onclick="toggleSun()" style="cursor:pointer; margin-right:5px;">◀</button>一</th>
+                <th>二</th><th>三</th><th>四</th>
+                <th>五<button onclick="toggleSat()" style="cursor:pointer; margin-left:5px;">▶</button></th>
+                <th>六</th>
+            </tr></thead><tbody>`;
             const firstDay = new Date(year, month - 1, 1).getDay(), lastDate = new Date(year, month, 0).getDate();
             let date = 1;
             for (let i = 0; i < 6; i++) {
@@ -177,7 +187,7 @@
                     else {
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
                         const isToday = (ds === todayStr);
-                        row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}"><div style="font-weight:bold;text-align:right;">${date}</div>`;
+                        row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}"><div style="font-weight:bold;text-align:center;">${date}</div>`;
                         leaveRecords.filter(r => ds >= r.start && ds <= r.end).forEach(r => {
                             let tc = (r.name === '金牛頓') ? 'golden-record' : (r.type === '活動' ? 'activity-record' : (r.type === '假期' ? 'holiday-record' : 'leave-record'));
                             row += `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
