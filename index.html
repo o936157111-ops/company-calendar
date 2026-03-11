@@ -12,7 +12,7 @@
         }
         table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; }
         th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
-        th { background-color: #e3f2fd; color: #0d47a1; position: relative; }
+        th { background-color: #e3f2fd; color: #0d47a1; }
         
         #calendarContainer { margin-top: 30px; border: 1px solid #0d47a1; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; background: white; }
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
@@ -22,11 +22,9 @@
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
-        /* 隱藏邏輯：僅隱藏該欄位的文字內容，但保留按鈕所在的 TH */
-        .hide-sun th:nth-child(1) span, .hide-sun td:nth-child(1) { display: none !important; }
-        .hide-sun th:nth-child(1) button { display: block !important; margin: 0 auto; }
-        .hide-sat th:nth-child(7) span, .hide-sat td:nth-child(7) { display: none !important; }
-        .hide-sat th:nth-child(7) button { display: block !important; margin: 0 auto; }
+        /* 隱藏週末欄位 */
+        .hide-sun th:nth-child(1), .hide-sun td:nth-child(1) { display: none !important; }
+        .hide-sat th:nth-child(7), .hide-sat td:nth-child(7) { display: none !important; }
 
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
@@ -51,15 +49,11 @@
         <table id="calendar">
             <thead>
                 <tr>
-                    <th>
-                        <button onclick="toggleSun()" style="cursor:pointer; padding:2px 5px;">◀</button>
-                        <span>日</span>
-                    </th>
-                    <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th>
-                    <th>
-                        <span>六</span>
-                        <button onclick="toggleSat()" style="cursor:pointer; padding:2px 5px;">▶</button>
-                    </th>
+                    <th>日</th>
+                    <th><button onclick="toggleSun()" style="cursor:pointer; margin-right:5px;">◀</button>一</th>
+                    <th>二</th><th>三</th><th>四</th>
+                    <th>五<button onclick="toggleSat()" style="cursor:pointer; margin-left:5px;">▶</button></th>
+                    <th>六</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -178,9 +172,11 @@
             const today = new Date();
             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             let html = `<thead><tr>
-                <th><button onclick="toggleSun()" style="cursor:pointer; padding:2px 5px;">◀</button> <span>日</span></th>
-                <th>一</th><th>二</th><th>三</th><th>四</th><th>五</th>
-                <th><span>六</span> <button onclick="toggleSat()" style="cursor:pointer; padding:2px 5px;">▶</button></th>
+                <th>日</th>
+                <th><button onclick="toggleSun()" style="cursor:pointer; margin-right:5px;">◀</button>一</th>
+                <th>二</th><th>三</th><th>四</th>
+                <th>五<button onclick="toggleSat()" style="cursor:pointer; margin-left:5px;">▶</button></th>
+                <th>六</th>
             </tr></thead><tbody>`;
             const firstDay = new Date(year, month - 1, 1).getDay(), lastDate = new Date(year, month, 0).getDate();
             let date = 1;
