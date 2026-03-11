@@ -18,13 +18,19 @@
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 0.6em; }
         
+        /* 手機 RWD 優化：只讓表格容器可水平滑動，維持電腦版配置 */
+        @media (max-width: 600px) {
+            #calendarContainer { overflow-x: auto; }
+            #calendar { min-width: 800px; }
+        }
+
         #calendar td { height: 110px; vertical-align: top; width: 14.28%; }
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
-        /* 隱藏週末欄位 */
-        .hide-sun th:nth-child(1), .hide-sun td:nth-child(1) { display: none !important; }
-        .hide-sat th:nth-child(7), .hide-sat td:nth-child(7) { display: none !important; }
+        /* 隱藏週末邏輯 */
+        .hide-sun #calendar th:nth-child(1), .hide-sun #calendar td:nth-child(1),
+        .hide-sat #calendar th:nth-child(7), .hide-sat #calendar td:nth-child(7) { display: none !important; }
 
         .leave-record { padding: 3px 6px; margin-top: 3px; border-radius: 3px; font-size: 0.85em; text-align: left; border-left: 4px solid #999; background: #eee; word-break: break-all; }
         .activity-record { background-color: #673ab7 !important; color: white !important; }
@@ -126,10 +132,18 @@
 
         function toggleSun() { document.getElementById('calendarContainer').classList.toggle('hide-sun'); }
         function toggleSat() { document.getElementById('calendarContainer').classList.toggle('hide-sat'); }
+        
+        // 關鍵修正：確保週末同步隱藏或顯示
         function toggleAllWeekend() { 
             const el = document.getElementById('calendarContainer');
-            el.classList.toggle('hide-sun');
-            el.classList.toggle('hide-sat');
+            const isHidden = el.classList.contains('hide-sun') || el.classList.contains('hide-sat');
+            if (isHidden) {
+                el.classList.remove('hide-sun');
+                el.classList.remove('hide-sat');
+            } else {
+                el.classList.add('hide-sun');
+                el.classList.add('hide-sat');
+            }
         }
 
         function queryRecords() {
