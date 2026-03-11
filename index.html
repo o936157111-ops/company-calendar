@@ -1,6 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
-<head>
+<html lang="zh-TW"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>金牛頓公司活動行事曆</title>
@@ -42,24 +41,16 @@
             #calendar { display: none !important; }
             #mobileCards { display: block; }
             
+            #currentYearMonth { 
+                font-size: 0.8em !important;
+                white-space: nowrap !important;
+                margin: 0 5px; 
+            }
             #calendarHeader {
-                padding: 5px !important;
-                display: flex !important;
-                justify-content: space-between !important;
-                align-items: center !important;
-                flex-wrap: nowrap !important; /* 強制日期與按鈕維持在同一行 */
+                padding: 10px 5px !important;
             }
             #calendarHeader button {
                 padding: 5px 8px !important;
-                font-size: 0.7em !important;
-                flex-shrink: 0; /* 防止按鈕被壓縮 */
-            }
-            #currentYearMonth { 
-                font-size: 0.9em !important;
-                white-space: nowrap !important;
-                margin: 0 5px !important;
-                overflow: hidden;
-                text-overflow: ellipsis;
             }
 
             .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -119,6 +110,7 @@
     <div id="queryResultArea"></div>
 
     <script>
+        // 國定假日清單
         const holidayList = [
             { date: "2026-01-01", name: "元旦" },
             { date: "2026-02-14", name: "春節" }, { date: "2026-02-15", name: "春節" }, { date: "2026-02-16", name: "春節" },
