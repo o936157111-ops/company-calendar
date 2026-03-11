@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="zh-TW"><head>
+<html lang="zh-TW">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>金牛頓公司活動行事曆</title>
@@ -20,7 +21,7 @@
         #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 0.6em; }
         
-        /* 年份月份並排設定 */
+        /* 年份月份預設並排 */
         #currentYearMonth { display: flex; flex-direction: row; gap: 8px; align-items: center; }
 
         #calendar td { height: 110px; vertical-align: top; width: 14.28%; }
@@ -45,6 +46,10 @@
             #calendar td { width: 100% !important; height: auto !important; margin-bottom: 10px; border: 1px solid #dee2e6; text-align: left; }
             #calendar td div:first-child { font-weight: bold; font-size: 1.1em; border-bottom: 1px solid #eee; margin-bottom: 5px; }
             .toggle-col-btn { display: none; }
+            
+            /* 優化紀錄查詢區塊 */
+            .action-section div[style*="flex-wrap:wrap"] { flex-direction: column; align-items: stretch; }
+            .action-section select, .action-section input, .action-section button { width: 100% !important; margin-bottom: 5px; }
         }
 
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
@@ -87,9 +92,11 @@
 
     <div class="action-section">
         <h3 style="margin-top:0;">🔍 紀錄查詢、備份與列印</h3>
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; flex-wrap:wrap; gap:10px;">
             <select id="queryNameSelect" style="min-width:150px; height:40px;"></select>
-            <input type="date" id="queryStartDate"> 至 <input type="date" id="queryEndDate">
+            <div style="display:flex; gap:5px; align-items:center;">
+                <input type="date" id="queryStartDate"> 至 <input type="date" id="queryEndDate">
+            </div>
             <button onclick="queryRecords()" style="height:40px; background:#007bff; color:white; border:none; padding:0 20px; border-radius:4px; cursor:pointer;">查詢</button>
             <button onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
             <button onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">💾 儲存</button>
@@ -133,7 +140,6 @@
 
         function renderCalendar(year, month) {
             const calendarEl = document.getElementById('calendar');
-            // 更新年份與月份顯示
             document.querySelector('.year-text').textContent = `${year}年`;
             document.querySelector('.month-text').textContent = `${month}月`;
             
