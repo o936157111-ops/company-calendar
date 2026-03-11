@@ -81,6 +81,7 @@
             <button onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
             <button onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">💾 儲存</button>
             <button onclick="window.print()" style="height:40px; background:#607d8b; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🖨️ 列印</button>
+            <button onclick="toggleAllWeekend()" style="height:40px; background:#455a64; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🗓️ 顯示/隱藏週末</button>
         </div>
     </div>
 
@@ -127,9 +128,13 @@
             } catch (e) { console.error("資料讀取失敗", e); }
         }
 
-        // 獨立切換函式
         function toggleSun() { document.getElementById('calendarContainer').classList.toggle('hide-sun'); }
         function toggleSat() { document.getElementById('calendarContainer').classList.toggle('hide-sat'); }
+        function toggleAllWeekend() { 
+            const el = document.getElementById('calendarContainer');
+            el.classList.toggle('hide-sun');
+            el.classList.toggle('hide-sat');
+        }
 
         function queryRecords() {
             const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
