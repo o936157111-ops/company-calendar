@@ -41,17 +41,16 @@
             #calendar { display: none !important; }
             #mobileCards { display: block; }
             
-            /* 針對手機標題的文字縮小，使其排在同一列 */
             #currentYearMonth { 
-                font-size: 0.8em !important; /* 縮小文字 */
-                white-space: nowrap !important; /* 強制不換行 */
+                font-size: 0.8em !important;
+                white-space: nowrap !important;
                 margin: 0 5px; 
             }
             #calendarHeader {
-                padding: 10px 5px !important; /* 稍微縮小內距釋放空間 */
+                padding: 10px 5px !important;
             }
             #calendarHeader button {
-                padding: 5px 8px !important; /* 稍微縮小按鈕 */
+                padding: 5px 8px !important;
             }
 
             .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -149,10 +148,15 @@
 
         function toggleSun() { document.getElementById('calendarContainer').classList.toggle('hide-sun'); }
         function toggleSat() { document.getElementById('calendarContainer').classList.toggle('hide-sat'); }
+        
+        // --- 修正後的邏輯 ---
         function toggleAllWeekend() { 
             const el = document.getElementById('calendarContainer');
-            el.classList.toggle('hide-sun');
-            el.classList.toggle('hide-sat');
+            if (el.classList.contains('hide-sun') || el.classList.contains('hide-sat')) {
+                el.classList.remove('hide-sun', 'hide-sat');
+            } else {
+                el.classList.add('hide-sun', 'hide-sat');
+            }
         }
 
         function queryRecords() {
@@ -266,4 +270,5 @@
             fetchData(); 
         });
     </script>
-</body></html>
+</body>
+</html>
