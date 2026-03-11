@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>金牛頓公司活動行事曆</title>
     <style>
-        /* --- 電腦版樣式：絕對維持原樣 --- */
+        /* --- 電腦版樣式 --- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
         
@@ -23,6 +23,7 @@
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
+        /* 週末顯示/隱藏關鍵 CSS */
         .hide-sun th:nth-child(1), .hide-sun td:nth-child(1) { display: none !important; }
         .hide-sat th:nth-child(7), .hide-sat td:nth-child(7) { display: none !important; }
 
@@ -34,7 +35,6 @@
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
         
-        /* 查詢區域的父層容器 (電腦版) */
         .query-flex { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
         /* --- 手機版專屬修正區 --- */
@@ -52,17 +52,16 @@
             .card-date { font-weight: bold; color: #0d47a1; border-bottom: 2px solid #e3f2fd; margin-bottom: 8px; font-size: 1.1em; display: flex; justify-content: space-between; }
             .card-weekend { color: #d32f2f; }
 
-            /* 手機查詢區域整齊化排版 */
             .query-flex { gap: 8px !important; }
             .query-flex select, 
             .query-flex input[type="date"], 
             .query-flex button { 
-                width: calc(50% - 4px) !important; /* 兩兩一排，扣除 gap */
+                width: calc(50% - 4px) !important; 
                 flex-grow: 1;
                 margin: 0 !important;
             }
-            .query-flex #queryNameSelect { width: 100% !important; } /* 姓名選單單獨一整排 */
-            .query-flex span { width: 100%; text-align: center; font-size: 12px; color: #666; margin: -4px 0; } /* 「至」居中顯示 */
+            .query-flex #queryNameSelect { width: 100% !important; } 
+            .query-flex span { width: 100%; text-align: center; font-size: 12px; color: #666; margin: -4px 0; } 
         }
 
         @media print { .no-print, .action-section, #calendarHeader button { display: none !important; } }
@@ -112,7 +111,7 @@
             <button onclick="exportToExcel()" style="background:#ef6c00; color:white; border:none; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
             <button onclick="saveFullHTML()" style="background:#2e7d32; color:white; border:none; border-radius:4px; cursor:pointer;">💾 儲存</button>
             <button onclick="window.print()" style="background:#607d8b; color:white; border:none; border-radius:4px; cursor:pointer;">🖨️ 列印</button>
-            <button onclick="toggleAllWeekend()" style="background:#455a64; color:white; border:none; border-radius:4px; cursor:pointer;">🗓️ 隱藏週末</button>
+            <button onclick="toggleAllWeekend()" style="background:#455a64; color:white; border:none; border-radius:4px; cursor:pointer;">🗓️ 顯示/隱藏週末</button>
         </div>
     </div>
 
@@ -155,12 +154,20 @@
             } catch (e) { console.error("資料讀取失敗", e); }
         }
 
+        /* --- 恢復原始週末控制邏輯 --- */
         function toggleSun() { document.getElementById('calendarContainer').classList.toggle('hide-sun'); }
         function toggleSat() { document.getElementById('calendarContainer').classList.toggle('hide-sat'); }
         function toggleAllWeekend() { 
             const el = document.getElementById('calendarContainer');
-            el.classList.toggle('hide-sun');
-            el.classList.toggle('hide-sat');
+            // 如果目前有任一個被隱藏，就全部顯示；否則全部隱藏
+            const isAnyHidden = el.classList.contains('hide-sun') || el.classList.contains('hide-sat');
+            if (isAnyHidden) {
+                el.classList.remove('hide-sun');
+                el.classList.remove('hide-sat');
+            } else {
+                el.classList.add('hide-sun');
+                el.classList.add('hide-sat');
+            }
         }
 
         function queryRecords() {
