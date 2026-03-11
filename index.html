@@ -4,7 +4,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
     <title>金牛頓公司活動行事曆</title>
     <style>
-        /* --- 電腦版樣式：完全保持不動 --- */
+        /* --- 電腦版樣式：絕對維持原樣 --- */
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
         
@@ -33,30 +33,36 @@
 
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
         .action-section { background: white; padding: 20px; border: 1px solid #ccc; border-radius: 8px; margin-top: 20px; }
+        
+        /* 查詢區域的父層容器 (電腦版) */
+        .query-flex { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-        /* --- 手機版專屬修正區 (只在螢幕 600px 以下生效) --- */
+        /* --- 手機版專屬修正區 --- */
         #mobileCards { display: none; padding: 10px; background: #f1f3f4; }
         
         @media (max-width: 600px) {
             #calendar { display: none !important; }
             #mobileCards { display: block; }
             
-            /* 針對手機標題的文字縮小，使其排在同一列 */
-            #currentYearMonth { 
-                font-size: 0.8em !important; /* 縮小文字 */
-                white-space: nowrap !important; /* 強制不換行 */
-                margin: 0 5px; 
-            }
-            #calendarHeader {
-                padding: 10px 5px !important; /* 稍微縮小內距釋放空間 */
-            }
-            #calendarHeader button {
-                padding: 5px 8px !important; /* 稍微縮小按鈕 */
-            }
+            #currentYearMonth { font-size: 0.8em !important; white-space: nowrap !important; margin: 0 5px; }
+            #calendarHeader { padding: 10px 5px !important; }
+            #calendarHeader button { padding: 5px 8px !important; }
 
             .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
             .card-date { font-weight: bold; color: #0d47a1; border-bottom: 2px solid #e3f2fd; margin-bottom: 8px; font-size: 1.1em; display: flex; justify-content: space-between; }
             .card-weekend { color: #d32f2f; }
+
+            /* 手機查詢區域整齊化排版 */
+            .query-flex { gap: 8px !important; }
+            .query-flex select, 
+            .query-flex input[type="date"], 
+            .query-flex button { 
+                width: calc(50% - 4px) !important; /* 兩兩一排，扣除 gap */
+                flex-grow: 1;
+                margin: 0 !important;
+            }
+            .query-flex #queryNameSelect { width: 100% !important; } /* 姓名選單單獨一整排 */
+            .query-flex span { width: 100%; text-align: center; font-size: 12px; color: #666; margin: -4px 0; } /* 「至」居中顯示 */
         }
 
         @media print { .no-print, .action-section, #calendarHeader button { display: none !important; } }
@@ -97,14 +103,16 @@
 
     <div class="action-section">
         <h3 style="margin-top:0;">🔍 紀錄查詢、備份與列印</h3>
-        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-            <select id="queryNameSelect" style="min-width:150px; height:40px;"></select>
-            <input type="date" id="queryStartDate"> 至 <input type="date" id="queryEndDate">
-            <button onclick="queryRecords()" style="height:40px; background:#007bff; color:white; border:none; padding:0 20px; border-radius:4px; cursor:pointer;">查詢</button>
-            <button onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
-            <button onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">💾 儲存</button>
-            <button onclick="window.print()" style="height:40px; background:#607d8b; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🖨️ 列印</button>
-            <button onclick="toggleAllWeekend()" style="height:40px; background:#455a64; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🗓️ 顯示/隱藏週末</button>
+        <div class="query-flex">
+            <select id="queryNameSelect"></select>
+            <input type="date" id="queryStartDate">
+            <span>至</span>
+            <input type="date" id="queryEndDate">
+            <button onclick="queryRecords()" style="background:#007bff; color:white; border:none; border-radius:4px; cursor:pointer;">執行查詢</button>
+            <button onclick="exportToExcel()" style="background:#ef6c00; color:white; border:none; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
+            <button onclick="saveFullHTML()" style="background:#2e7d32; color:white; border:none; border-radius:4px; cursor:pointer;">💾 儲存</button>
+            <button onclick="window.print()" style="background:#607d8b; color:white; border:none; border-radius:4px; cursor:pointer;">🖨️ 列印</button>
+            <button onclick="toggleAllWeekend()" style="background:#455a64; color:white; border:none; border-radius:4px; cursor:pointer;">🗓️ 隱藏週末</button>
         </div>
     </div>
 
@@ -196,7 +204,6 @@
             
             let html = '';
             let cardsHtml = '';
-            
             const firstDay = new Date(year, month - 1, 1).getDay();
             const lastDate = new Date(year, month, 0).getDate();
             const weekDays = ['日','一','二','三','四','五','六'];
@@ -211,7 +218,6 @@
                         const ds = `${year}-${String(month).padStart(2,'0')}-${String(date).padStart(2,'0')}`;
                         const isToday = (ds === todayStr);
                         const records = leaveRecords.filter(r => ds >= r.start && ds <= r.end);
-                        
                         row += `<td style="${isToday ? 'background-color: #fff9c4;' : ''}">
                             <div style="font-weight:bold;text-align:center;">${date}</div>
                             ${records.map(r => {
@@ -219,7 +225,6 @@
                                 return `<div class="leave-record ${tc}">${r.name}-${r.note}</div>`;
                             }).join('')}
                         </td>`;
-                        
                         cardsHtml += `<div class="card">
                             <div class="card-date">
                                 <span>${month}月${date}日</span>
