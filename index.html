@@ -15,17 +15,14 @@
         th { background-color: #e3f2fd; color: #0d47a1; }
         
         #calendarContainer { margin-top: 30px; border: 1px solid #0d47a1; box-shadow: 0 4px 15px rgba(0,0,0,0.2); border-radius: 8px; overflow: hidden; background: white; }
-        
-        /* 兩行式導覽列排版 */
-        #calendarHeader { background-color: #0d47a1; color: white; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-        .header-row { display: flex; justify-content: space-between; width: 100%; align-items: center; }
-        #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-size: 0.9em; }
-        #currentYearMonth { font-size: 1.2em; font-weight: bold; }
+        #calendarHeader { background-color: #0d47a1; color: white; padding: 15px; font-size: 1.5em; font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+        #calendarHeader button { background: rgba(255,255,255,0.2); border: 1px solid white; color: white; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 0.6em; }
         
         #calendar td { height: 110px; vertical-align: top; width: 14.28%; }
         #calendar td:nth-child(1), #calendar th:nth-child(1) { color: #d32f2f; }
         #calendar td:nth-child(7), #calendar th:nth-child(7) { color: #1565c0; }
 
+        /* 隱藏週末樣式 */
         #calendarContainer.hide-weekend #calendar th:nth-child(1),
         #calendarContainer.hide-weekend #calendar td:nth-child(1),
         #calendarContainer.hide-weekend #calendar th:nth-child(7),
@@ -47,13 +44,11 @@
 
     <div id="calendarContainer" class="hide-weekend">
         <div id="calendarHeader">
-            <div class="header-row">
-                <button onclick="changeMonth(-1)">◀ 上個月</button>
-                <span id="currentYearMonth">2026年 3月</span>
-                <button onclick="changeMonth(1)">下個月 ▶</button>
-            </div>
-            <div class="header-row" style="justify-content: center;">
+            <button onclick="changeMonth(-1)">◀ 上個月</button>
+            <span id="currentYearMonth">2026年 3月</span>
+            <div>
                 <button onclick="toggleWeekend()">隱藏/顯示週末</button>
+                <button onclick="changeMonth(1)">下個月 ▶</button>
             </div>
         </div>
         <table id="calendar"><thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody></tbody></table>
