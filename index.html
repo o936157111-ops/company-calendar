@@ -48,7 +48,20 @@
             <span id="currentYearMonth">2026年 3月</span>
             <button onclick="changeMonth(1)">下個月 ▶</button>
         </div>
-        <table id="calendar"><thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody></tbody></table>
+        <table id="calendar">
+            <thead>
+                <tr>
+                    <th><button onclick="toggleWeekend()">◀</button> 日</th>
+                    <th>一</th>
+                    <th>二</th>
+                    <th>三</th>
+                    <th>四</th>
+                    <th>五 <button onclick="toggleWeekend()">▶</button></th>
+                    <th>六</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 
     <div class="suggestion-display-box">
@@ -156,7 +169,7 @@
             document.getElementById('currentYearMonth').textContent = `${year}年 ${month}月`;
             const today = new Date();
             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            let html = '<thead><tr><th>日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五</th><th>六</th></tr></thead><tbody>';
+            let html = '<thead><tr><th><button onclick="toggleWeekend()">◀</button> 日</th><th>一</th><th>二</th><th>三</th><th>四</th><th>五 <button onclick="toggleWeekend()">▶</button></th><th>六</th></tr></thead><tbody>';
             const firstDay = new Date(year, month - 1, 1).getDay(), lastDate = new Date(year, month, 0).getDate();
             let date = 1;
             for (let i = 0; i < 6; i++) {
