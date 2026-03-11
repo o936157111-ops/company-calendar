@@ -8,7 +8,9 @@
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; max-width: 1200px; margin: 0 auto; line-height: 1.6; }
         h2 { color: #0d47a1; border-bottom: 3px solid #e0e0e0; padding-bottom: 5px; margin-top: 5px; margin-bottom: 15px; }
         
-        select, input[type="date"], button { height: 40px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; vertical-align: middle; cursor: pointer; }
+        select, input[type="date"], input[type="text"], input[type="number"], textarea {
+            height: 40px; padding: 8px 12px; border: 1px solid #ced4da; border-radius: 4px; box-sizing: border-box; font-size: 14px; vertical-align: middle;
+        }
         table { width: 100%; border-collapse: collapse; background-color: white; margin-bottom: 20px; }
         th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
         th { background-color: #e3f2fd; color: #0d47a1; position: relative; }
@@ -33,6 +35,7 @@
         .golden-record { background-color: #0d47a1 !important; color: white !important; }
         .holiday-record { background-color: #e91e63 !important; color: white !important; }
 
+        /* RWD 區塊 */
         @media screen and (max-width: 768px) {
             #currentYearMonth { flex-direction: column; gap: 0; line-height: 1.2; }
             #currentYearMonth .year-text { font-size: 0.7em; }
@@ -42,7 +45,6 @@
             #calendar td div:first-child { font-weight: bold; font-size: 1.1em; border-bottom: 1px solid #eee; margin-bottom: 5px; }
             .toggle-col-btn { display: none; }
             .action-section div { flex-direction: column !important; }
-            .action-section button, .action-section select, .action-section input { width: 100% !important; margin-bottom: 5px; }
         }
 
         .suggestion-display-box { background-color: #ffffff; border: 2px solid #ffb74d; border-radius: 8px; padding: 20px; margin-top: 30px; }
@@ -85,16 +87,14 @@
 
     <div class="action-section">
         <h3 style="margin-top:0;">🔍 紀錄查詢、備份與列印</h3>
-        <div style="display:flex; flex-wrap:wrap; gap:10px;">
-            <select id="queryNameSelect" style="min-width:150px;"></select>
-            <div style="display:flex; gap:5px; align-items:center;">
-                <input type="date" id="queryStartDate"> 至 <input type="date" id="queryEndDate">
-            </div>
-            <button onclick="window.queryRecords()">查詢</button>
-            <button onclick="window.exportToExcel()">📊 查詢匯出</button>
-            <button onclick="window.saveFullHTML()">💾 儲存</button>
-            <button onclick="window.print()">🖨️ 列印</button>
-            <button onclick="window.toggleAllWeekend()">🗓️ 顯示/隱藏全部週末</button>
+        <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <select id="queryNameSelect" style="min-width:150px; height:40px;"></select>
+            <input type="date" id="queryStartDate"> 至 <input type="date" id="queryEndDate">
+            <button onclick="queryRecords()" style="height:40px; background:#007bff; color:white; border:none; padding:0 20px; border-radius:4px; cursor:pointer;">查詢</button>
+            <button onclick="exportToExcel()" style="height:40px; background:#ef6c00; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">📊 查詢匯出</button>
+            <button onclick="saveFullHTML()" style="height:40px; background:#2e7d32; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">💾 儲存</button>
+            <button onclick="window.print()" style="height:40px; background:#607d8b; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🖨️ 列印</button>
+            <button onclick="toggleAllWeekend()" style="height:40px; background:#455a64; color:white; border:none; padding:0 15px; border-radius:4px; cursor:pointer;">🗓️ 顯示/隱藏全部週末</button>
         </div>
     </div>
 
@@ -109,11 +109,11 @@
         let leaveRecords = [], suggestions = [];
 
         function toggleColumn(className) { document.getElementById('calendarContainer').classList.toggle(className); }
-        window.toggleAllWeekend = function() { 
+        function toggleAllWeekend() { 
             const el = document.getElementById('calendarContainer');
             el.classList.toggle('hide-sun');
             el.classList.toggle('hide-sat');
-        };
+        }
 
         async function fetchData() {
             try {
@@ -121,7 +121,7 @@
                 const dataL = await resL.text();
                 leaveRecords = dataL.split('\n').slice(1).filter(r => r.trim() !== '').map((row, index) => {
                     const cols = row.split(',');
-                    return { name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: cols[4] || "整天", note: cols[5] || '' };
+                    return { id: Date.now() + index, name: cols[0], type: cols[1], start: cols[2], end: cols[3], displayDuration: cols[4] || "整天", note: cols[5] || '' };
                 });
                 const resS = await fetch(SUGGEST_CSV_URL);
                 const dataS = await resS.text();
@@ -161,26 +161,26 @@
             document.getElementById('suggestionList').innerHTML = suggestions.map(s => `<tr><td style="font-weight:bold;">${s.title}</td><td style="text-align:left; white-space:pre-wrap;">${s.content}</td></tr>`).join('');
         }
 
-        window.changeMonth = function(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); };
+        function changeMonth(d) { currentDisplayDate.setMonth(currentDisplayDate.getMonth() + d); renderCalendar(currentDisplayDate.getFullYear(), currentDisplayDate.getMonth() + 1); }
         
-        window.queryRecords = function() {
+        function queryRecords() {
             const qName = document.getElementById('queryNameSelect').value, s = document.getElementById('queryStartDate').value, e = document.getElementById('queryEndDate').value;
             if (!s || !e) return alert("請選日期範圍");
             let res = leaveRecords.filter(r => ((r.start >= s && r.start <= e) || (r.end >= s && r.end <= e)) && (qName === "全部人員" || r.name === qName));
             let h = `<table><thead><tr><th>姓名</th><th>事別</th><th>說明</th></tr></thead><tbody>`;
             res.forEach(r => { h += `<tr><td>${r.name}</td><td>${r.type}</td><td>${r.note}</td></tr>`; });
             document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
-        };
+        }
 
-        window.exportToExcel = function() { alert("匯出功能已就緒，請確認CSV連結權限"); };
+        function exportToExcel() { alert("匯出功能已就緒，請確認CSV連結權限"); }
 
-        window.saveFullHTML = function() {
+        function saveFullHTML() {
             const blob = new Blob(['<!DOCTYPE html>\n' + document.documentElement.outerHTML], { type: 'text/html' });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
             a.download = `金牛頓行事曆_${new Date().toISOString().split('T')[0]}.html`;
             a.click();
-        };
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             nameList.forEach(n => document.getElementById('queryNameSelect').add(new Option(n, n)));
