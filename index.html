@@ -53,12 +53,18 @@
             #queryResultArea table th:nth-child(6), 
             #queryResultArea table td:nth-child(6) { display: none !important; }
             
-            /* 將統計摘要欄位壓縮至最小寬度 */
+            /* 調整手機版統計摘要列排版 */
             #queryResultArea table tr[style*="fff9c4"] td:first-child {
-                width: 1% !important;
-                white-space: nowrap !important;
-                padding: 5px 10px !important;
+                width: 80px !important;
+                white-space: normal !important;
+                padding: 10px 5px !important;
                 text-align: center !important;
+                font-weight: bold;
+            }
+            #queryResultArea table tr[style*="fff9c4"] td:last-child {
+                text-align: left !important;
+                padding: 10px !important;
+                line-height: 1.4 !important;
             }
 
             .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -95,7 +101,7 @@
     </div>
 
     <div class="suggestion-display-box">
-        <h3>📋 公司活動建議內容</h3>
+        <h3 style="margin-top:0; color: #e65100;">📋 公司活動建議內容</h3>
         <table id="suggestionTable">
             <thead><tr><th style="width:25%">項目</th><th style="width:75%">建議詳情</th></tr></thead>
             <tbody id="suggestionList"></tbody>
@@ -103,7 +109,7 @@
     </div>
 
     <div class="action-section">
-        <h3>🔍 紀錄查詢、備份與列印</h3>
+        <h3 style="margin-top:0;">🔍 紀錄查詢、備份與列印</h3>
         <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
             <select id="queryNameSelect" style="min-width:100px; height:40px;"></select>
             <input type="date" id="queryStartDate"> 至 <input type="date" id="queryEndDate">
@@ -199,7 +205,6 @@
             });
             if (res.length > 0) {
                 let stText = Object.keys(stats).map(k => `${k}: ${stats[k]}天`).join(' | ');
-                // 這裡改為簡單文字顯示，CSS 會負責處理寬度
                 h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${stText}</td></tr>`;
             } else { h += `<tr><td colspan="6">此範圍內查無資料</td></tr>`; }
             document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
