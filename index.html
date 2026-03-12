@@ -41,36 +41,25 @@
             #calendar { display: none !important; }
             #mobileCards { display: block; }
             
-            #currentYearMonth { 
-                font-size: 0.8em !important;
-                white-space: nowrap !important;
-                margin: 0 5px; 
-            }
-            #calendarHeader {
-                padding: 10px 5px !important;
-            }
-            #calendarHeader button {
-                padding: 5px 8px !important;
-            }
+            #currentYearMonth { font-size: 0.8em !important; white-space: nowrap !important; margin: 0 5px; }
+            #calendarHeader { padding: 10px 5px !important; }
+            #calendarHeader button { padding: 5px 8px !important; }
 
-            .action-section > div {
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
-                gap: 5px !important;
-            }
-            /* 手機版：姓名選單寬度設為 100% */
-            .action-section select#queryNameSelect {
-                width: 100% !important;
-                min-width: 100% !important;
-            }
-            .action-section input[type="date"] {
-                width: 125px !important;
-            }
+            .action-section > div { flex-direction: row !important; flex-wrap: wrap !important; gap: 5px !important; }
+            .action-section select#queryNameSelect { width: 100% !important; min-width: 100% !important; }
+            .action-section input[type="date"] { width: 125px !important; }
 
-            /* 手機版：隱藏查詢結果表格的說明欄位 */
+            /* 隱藏手機版查詢結果表格的說明欄位 */
             #queryResultArea table th:nth-child(6), 
-            #queryResultArea table td:nth-child(6) {
-                display: none !important;
+            #queryResultArea table td:nth-child(6) { display: none !important; }
+            
+            /* 將統計摘要單元格寬度限制為約兩個字寬，並強制換行 */
+            #queryResultArea table tr[style*="fff9c4"] td:first-child {
+                width: 2em !important;
+                word-wrap: break-word !important;
+                white-space: pre-wrap !important;
+                line-height: 1.2 !important;
+                padding: 5px !important;
             }
 
             .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
@@ -211,7 +200,8 @@
             });
             if (res.length > 0) {
                 let stText = Object.keys(stats).map(k => `${k}: ${stats[k]}天`).join(' | ');
-                h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="3">統計摘要</td><td colspan="3">${stText}</td></tr>`;
+                // 為了達成統計摘要「統計」在「摘要」上，我們在字串中間加入換行符號
+                h += `<tr style="background:#fff9c4; font-weight:bold;"><td colspan="3">統計<br>摘要</td><td colspan="3">${stText}</td></tr>`;
             } else { h += `<tr><td colspan="6">此範圍內查無資料</td></tr>`; }
             document.getElementById('queryResultArea').innerHTML = h + '</tbody></table>';
         }
