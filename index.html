@@ -58,13 +58,19 @@
                 flex-wrap: wrap !important;
                 gap: 5px !important;
             }
-            /* 手機版：姓名選單寬度設為 100% 填滿頁面 */
+            /* 手機版：姓名選單寬度設為 100% */
             .action-section select#queryNameSelect {
                 width: 100% !important;
                 min-width: 100% !important;
             }
             .action-section input[type="date"] {
                 width: 125px !important;
+            }
+
+            /* 手機版：隱藏查詢結果表格的說明欄位 */
+            #queryResultArea table th:nth-child(6), 
+            #queryResultArea table td:nth-child(6) {
+                display: none !important;
             }
 
             .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
