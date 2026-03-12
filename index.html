@@ -53,14 +53,18 @@
                 padding: 5px 8px !important;
             }
 
-            /* 修改查詢區塊在手機版保持水平並排 */
             .action-section > div {
                 flex-direction: row !important;
                 flex-wrap: wrap !important;
                 gap: 5px !important;
             }
+            /* 手機版：強制將姓名選單加大到 200px */
+            .action-section select#queryNameSelect {
+                width: 200px !important;
+                min-width: 200px !important;
+            }
             .action-section input[type="date"] {
-                width: 125px !important; /* 調整寬度以塞入同一列 */
+                width: 125px !important;
             }
 
             .card { border: 1px solid #ccc; padding: 12px; margin-bottom: 8px; background: white; border-radius: 6px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
